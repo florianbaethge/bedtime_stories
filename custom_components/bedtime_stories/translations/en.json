@@ -1,0 +1,68 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Bedtime Stories",
+        "description": "Create a story library. Categories and stories are managed later, directly in the dashboard card editor.",
+        "data": {
+          "name": "Name",
+          "players": "Media players"
+        },
+        "data_description": {
+          "players": "Players offered by the player select entity (e.g. the kid's room speaker and your phone). Leave empty to always pick the player in the card."
+        }
+      }
+    },
+    "error": {
+      "name_required": "Please enter a name."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bedtime Stories options",
+        "data": {
+          "players": "Media players"
+        },
+        "data_description": {
+          "players": "Players offered by the player select entity."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "player": {
+        "name": "Player"
+      }
+    },
+    "sensor": {
+      "last_story": {
+        "name": "Last story"
+      },
+      "total_plays": {
+        "name": "Total plays"
+      }
+    }
+  },
+  "services": {
+    "play": {
+      "name": "Play story",
+      "description": "Plays a story from the library on a media player and records it in the play statistics.",
+      "fields": {
+        "story_id": {
+          "name": "Story",
+          "description": "ID of the story (shown in the card editor)."
+        },
+        "media_player": {
+          "name": "Media player",
+          "description": "Overrides the player selected in the player select entity."
+        },
+        "config_entry_id": {
+          "name": "Library",
+          "description": "Only needed when several Bedtime Stories libraries exist."
+        }
+      }
+    }
+  }
+}

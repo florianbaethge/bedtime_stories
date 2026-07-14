@@ -1,0 +1,44 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["custom_components/bedtime_stories", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",     # builtins shadowing
+    "ANN",   # type annotations
+    "ASYNC", # async issues
+    "B",     # bugbear
+    "C4",    # comprehensions
+    "D",     # docstrings
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # naming
+    "PL",    # pylint
+    "RET",   # return statements
+    "RUF",   # ruff-specific
+    "SIM",   # simplify
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
+]
+ignore = [
+    "D203",    # incompatible with D211
+    "D213",    # incompatible with D212
+    "PLR2004", # magic values in comparisons
+    "PLC0415", # deferred imports are idiomatic in HA integrations
+    "ANN401",  # Any is required by many HA APIs (service data, **kwargs)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "ANN", "PLR", "SIM117"]
+# select.py is a mandated HA platform filename; it shadows stdlib `select`
+"custom_components/bedtime_stories/select.py" = ["A005"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true

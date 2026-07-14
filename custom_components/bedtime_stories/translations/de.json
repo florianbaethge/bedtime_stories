@@ -1,0 +1,68 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bedtime Stories einrichten",
+        "description": "Lege eine Geschichten-Bibliothek an. Kategorien und Geschichten pflegst du später direkt im Karten-Editor des Dashboards.",
+        "data": {
+          "name": "Name",
+          "players": "Medienplayer"
+        },
+        "data_description": {
+          "players": "Player, die die Player-Auswahl-Entität anbietet (z. B. Kinderzimmer-Lautsprecher und dein Handy). Leer lassen, um den Player immer in der Karte zu wählen."
+        }
+      }
+    },
+    "error": {
+      "name_required": "Bitte gib einen Namen ein."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bedtime-Stories-Optionen",
+        "data": {
+          "players": "Medienplayer"
+        },
+        "data_description": {
+          "players": "Player, die die Player-Auswahl-Entität anbietet."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "player": {
+        "name": "Wiedergabegerät"
+      }
+    },
+    "sensor": {
+      "last_story": {
+        "name": "Letzte Geschichte"
+      },
+      "total_plays": {
+        "name": "Wiedergaben gesamt"
+      }
+    }
+  },
+  "services": {
+    "play": {
+      "name": "Geschichte abspielen",
+      "description": "Spielt eine Geschichte aus der Bibliothek auf einem Medienplayer ab und zählt sie in der Statistik.",
+      "fields": {
+        "story_id": {
+          "name": "Geschichte",
+          "description": "ID der Geschichte (im Karten-Editor sichtbar)."
+        },
+        "media_player": {
+          "name": "Medienplayer",
+          "description": "Übersteuert den in der Player-Auswahl gewählten Player."
+        },
+        "config_entry_id": {
+          "name": "Bibliothek",
+          "description": "Nur nötig, wenn mehrere Bedtime-Stories-Bibliotheken existieren."
+        }
+      }
+    }
+  }
+}

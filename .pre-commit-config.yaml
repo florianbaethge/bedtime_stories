@@ -1,0 +1,15 @@
+# Optional: pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: hassfest
+        name: hassfest (Docker)
+        entry: scripts/hassfest.sh
+        language: script
+        pass_filenames: false
