@@ -248,7 +248,7 @@ class BedtimeStoriesManager:
             MEDIA_PLAYER_DOMAIN,
             SERVICE_PLAY_MEDIA,
             {
-                ATTR_ENTITY_ID: player,
+                ATTR_ENTITY_ID: [player],
                 ATTR_MEDIA_CONTENT_ID: story.media_content_id,
                 ATTR_MEDIA_CONTENT_TYPE: story.media_content_type,
                 ATTR_MEDIA_EXTRA: self._media_extra(story),
