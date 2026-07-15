@@ -5,6 +5,7 @@ import { styleMap } from "lit/directives/style-map.js";
 
 import { playStory, subscribeLibrary } from "./api";
 import { localize, relativeTime } from "./i18n";
+import { isMediaSource, resolveImage } from "./media-image";
 import {
   DEFAULT_CONFIG,
   type BedtimeStoriesCardConfig,
@@ -46,6 +47,9 @@ export class BedtimeStoriesCard extends LitElement {
   @state() private _config?: BedtimeStoriesCardConfig;
 
   @state() private _library?: LibrarySnapshot;
+
+  /** story.id → resolved cover URL, for images stored as media-source ids. */
+  @state() private _covers: Record<string, string> = {};
 
   @state() private _error?: string;
 
@@ -118,6 +122,7 @@ export class BedtimeStoriesCard extends LitElement {
       (snapshot) => {
         this._library = snapshot;
         this._error = undefined;
+        void this._resolveCovers(snapshot);
       },
       this._config.entry_id
     );
@@ -298,6 +303,29 @@ export class BedtimeStoriesCard extends LitElement {
     );
   }
 
+  /** Resolve any media-source cover ids into displayable URLs. */
+  private async _resolveCovers(lib: LibrarySnapshot): Promise<void> {
+    if (!this.hass) return;
+    const updates: Record<string, string> = {};
+    await Promise.all(
+      lib.stories.map(async (story) => {
+        if (!isMediaSource(story.image)) return;
+        const url = await resolveImage(this.hass!, story.image);
+        if (url && url !== this._covers[story.id]) updates[story.id] = url;
+      })
+    );
+    if (Object.keys(updates).length) {
+      this._covers = { ...this._covers, ...updates };
+    }
+  }
+
+  /** Direct URLs pass through; media-source ids use the resolved cache. */
+  private _coverUrl(story: Story): string | null {
+    if (!story.image) return null;
+    if (isMediaSource(story.image)) return this._covers[story.id] ?? null;
+    return story.image;
+  }
+
   private _statsLine(story: Story): string | undefined {
     const stats = this._library?.stats[story.id];
     if (!stats || stats.play_count === 0) {
@@ -427,16 +455,17 @@ export class BedtimeStoriesCard extends LitElement {
     const config = this._config!;
     const isPlaying = playing === story.id;
     const justPlayed = this._justPlayed === story.id;
+    const cover = this._coverUrl(story);
     return html`
       <button
         class=${classMap({ tile: true, playing: isPlaying })}
         style=${styleMap(
-          story.image ? { backgroundImage: `url("${story.image}")` } : {}
+          cover ? { backgroundImage: `url("${cover}")` } : {}
         )}
         aria-label=${story.title}
         @click=${() => this._play(story)}
       >
-        ${!story.image
+        ${!cover
           ? html`<ha-icon class="fallback" icon="mdi:book-open-variant"></ha-icon>`
           : nothing}
         ${config.show_duration && story.duration_min
@@ -468,6 +497,7 @@ export class BedtimeStoriesCard extends LitElement {
     const config = this._config!;
     const isPlaying = playing === story.id;
     const justPlayed = this._justPlayed === story.id;
+    const cover = this._coverUrl(story);
     return html`
       <button
         class=${classMap({ row: true, playing: isPlaying })}
@@ -477,10 +507,10 @@ export class BedtimeStoriesCard extends LitElement {
         <span
           class="thumb"
           style=${styleMap(
-            story.image ? { backgroundImage: `url("${story.image}")` } : {}
+            cover ? { backgroundImage: `url("${cover}")` } : {}
           )}
         >
-          ${!story.image
+          ${!cover
             ? html`<ha-icon icon="mdi:book-open-variant"></ha-icon>`
             : nothing}
           ${isPlaying
