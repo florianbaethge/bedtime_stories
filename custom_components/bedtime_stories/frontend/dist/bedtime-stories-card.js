@@ -96,6 +96,11 @@ function withEntry(msg, entryId) {
     return entryId ? { ...msg, entry_id: entryId } : msg;
 }
 const listEntries = (hass) => hass.callWS({ type: `${D}/entries/list` });
+/** Resolve a `media-source://…` id to a directly usable (signed) URL. */
+const resolveMediaSource = (hass, mediaContentId) => hass.callWS({
+    type: "media_source/resolve_media",
+    media_content_id: mediaContentId,
+});
 const subscribeLibrary = (hass, callback, entryId) => hass.connection.subscribeMessage(callback, withEntry({ type: `${D}/subscribe` }, entryId));
 const playStory = (hass, storyId, mediaPlayer, entryId) => hass.callWS(withEntry({
     type: `${D}/play`,
@@ -135,12 +140,11 @@ const TRANSLATIONS = {
         media_selected: "Selected media",
         media_none: "No media file selected yet",
         media_help: "Browse Home Assistant media — files can be uploaded to “My media” right in the browse dialog.",
-        cover_help: "Upload a picture or paste an image URL. Existing covers like /api/image/serve/… keep working.",
-        upload_image: "Upload picture",
-        uploading: "Uploading…",
-        upload_failed: "Upload failed",
-        remove_image: "Remove picture",
-        image_url: "…or image URL",
+        cover_selected: "Selected image",
+        cover_none: "No cover image selected yet",
+        cover_help: "Pick a cover from Home Assistant media — browse existing images or upload one, just like the audio file.",
+        image_url: "Cover image URL / content id",
+        image_url_help: "Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",
         duration_help: "Shown as a badge on the tile, e.g. “~20m”.",
         media_content_id_help: "Direct media-source URI or stream URL — overrides the picked media.",
         columns_help: "0 = automatic, based on the available width.",
@@ -215,12 +219,11 @@ const TRANSLATIONS = {
         media_selected: "Ausgewählte Medien",
         media_none: "Noch keine Mediendatei ausgewählt",
         media_help: "Durchsuche die Home-Assistant-Medien — Dateien kannst du direkt im Dialog unter „Meine Medien“ hochladen.",
-        cover_help: "Bild hochladen oder Bild-URL einfügen. Bestehende Cover wie /api/image/serve/… funktionieren weiter.",
-        upload_image: "Bild hochladen",
-        uploading: "Wird hochgeladen…",
-        upload_failed: "Upload fehlgeschlagen",
-        remove_image: "Bild entfernen",
-        image_url: "…oder Bild-URL",
+        cover_selected: "Ausgewähltes Bild",
+        cover_none: "Noch kein Cover-Bild ausgewählt",
+        cover_help: "Wähle ein Cover aus den Home-Assistant-Medien — bestehende Bilder durchsuchen oder hochladen, genau wie die Audiodatei.",
+        image_url: "Cover-Bild-URL / Content-ID",
+        image_url_help: "Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",
         duration_help: "Wird als Badge auf der Kachel angezeigt, z. B. „~20m“.",
         media_content_id_help: "Direkte media-source-URI oder Stream-URL — übersteuert die ausgewählte Datei.",
         columns_help: "0 = automatisch, passend zur verfügbaren Breite.",
@@ -306,6 +309,39 @@ function relativeTime(hass, iso) {
     return rtf.format(0, "minute");
 }
 
+/** Cover values that browse from the media library carry this scheme. */
+function isMediaSource(value) {
+    return typeof value === "string" && value.startsWith("media-source://");
+}
+// Resolved media-source URLs are signed and time-limited, so we cache them only
+// briefly — long enough to avoid a websocket round-trip per re-render, short
+// enough that a freshly created <img> never points at an expired signature.
+const TTL_MS = 4 * 60 * 1000;
+const cache = new Map();
+/**
+ * Turn a stored cover value into something usable as an image URL: a
+ * `media-source://…` id is resolved via the websocket API (and cached), while
+ * plain URLs / `/api/image/serve/…` paths pass straight through.
+ */
+async function resolveImage(hass, value) {
+    if (!value)
+        return null;
+    if (!isMediaSource(value))
+        return value;
+    const now = Date.now();
+    const hit = cache.get(value);
+    if (hit && now - hit.at < TTL_MS)
+        return hit.url;
+    try {
+        const { url } = await resolveMediaSource(hass, value);
+        cache.set(value, { url, at: now });
+        return url;
+    }
+    catch {
+        return null;
+    }
+}
+
 const DEFAULT_CONFIG = {
     layout: "grid",
     columns: 0, // 0 = automatic
@@ -351,17 +387,20 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     constructor() {
         super(...arguments);
         this._entries = [];
+        /** story.id → resolved cover URL, for images stored as media-source ids. */
+        this._covers = {};
         this._formReady = false;
         this._categoryDraft = null;
         this._storyDraft = null;
         this._storyAdvanced = false;
-        this._uploading = false;
         this._computeLabel = (schema) => schema.name === "entry_id" ? this._l("entry") : this._l(schema.name);
         this._computeHelper = (schema) => {
             if (schema.name === "columns")
                 return this._l("columns_help");
             return undefined;
         };
+        /** The cover section has its own header, so the image selector stays unlabeled. */
+        this._noLabel = () => "";
     }
     setConfig(config) {
         this._config = { ...config };
@@ -399,6 +438,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         this._unsubscribe = subscribeLibrary(this.hass, (snapshot) => {
             this._library = snapshot;
             this._error = undefined;
+            void this._resolveCovers(snapshot);
         }, this._config?.entry_id || undefined);
         this._unsubscribe.catch(() => {
             this._unsubscribe = undefined;
@@ -407,6 +447,30 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     }
     _l(key, vars) {
         return localize(this.hass, key, vars);
+    }
+    /** Resolve any media-source cover ids into displayable thumbnail URLs. */
+    async _resolveCovers(lib) {
+        if (!this.hass)
+            return;
+        const updates = {};
+        await Promise.all(lib.stories.map(async (story) => {
+            if (!isMediaSource(story.image))
+                return;
+            const url = await resolveImage(this.hass, story.image);
+            if (url && url !== this._covers[story.id])
+                updates[story.id] = url;
+        }));
+        if (Object.keys(updates).length) {
+            this._covers = { ...this._covers, ...updates };
+        }
+    }
+    /** Direct URLs pass through; media-source ids use the resolved cache. */
+    _storyThumb(story) {
+        if (!story.image)
+            return null;
+        if (isMediaSource(story.image))
+            return this._covers[story.id] ?? null;
+        return story.image;
     }
     // ---- settings forms ------------------------------------------------------
     _basicsSchema() {
@@ -597,6 +661,9 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
                     media_content_id: story.media_content_id,
                     media_content_type: story.media_content_type,
                 },
+                cover_media: isMediaSource(story.image)
+                    ? { media_content_id: story.image, media_content_type: "image/*" }
+                    : undefined,
             }
             : {
                 category_id: categoryId,
@@ -633,7 +700,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     async _saveStory() {
         if (!this.hass || !this._storyDraft)
             return;
-        const { media: _media, ...story } = this._storyDraft;
+        const { media: _media, cover_media: _coverMedia, ...story } = this._storyDraft;
         try {
             await saveStory(this.hass, { ...story }, this._entryId);
             this._storyDraft = null;
@@ -681,39 +748,15 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
                 draft.title = media.metadata.title;
             }
         }
+        // Copy the cover image pick (a media-source id) into the image field;
+        // clearing the picker clears the image too.
+        const coverMedia = value.cover_media;
+        if (coverMedia &&
+            coverMedia.media_content_id !==
+                this._storyDraft?.cover_media?.media_content_id) {
+            draft.image = coverMedia.media_content_id || null;
+        }
         this._storyDraft = draft;
-    }
-    async _uploadCover(ev) {
-        const input = ev.target;
-        const file = input.files?.[0];
-        input.value = "";
-        if (!file || !this.hass || !this._storyDraft)
-            return;
-        this._uploading = true;
-        this._error = undefined;
-        try {
-            const form = new FormData();
-            form.append("file", file);
-            const resp = await this.hass.fetchWithAuth("/api/image/upload", {
-                method: "POST",
-                body: form,
-            });
-            if (!resp.ok) {
-                throw new Error(`${this._l("upload_failed")} (HTTP ${resp.status})`);
-            }
-            const data = (await resp.json());
-            this._storyDraft = {
-                ...this._storyDraft,
-                image: `/api/image/serve/${data.id}/512x512`,
-            };
-        }
-        catch (err) {
-            this._error =
-                err?.message ?? this._l("upload_failed");
-        }
-        finally {
-            this._uploading = false;
-        }
     }
     _mediaDisplayName(draft) {
         if (draft.media?.metadata?.title)
@@ -723,6 +766,16 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         const clean = draft.media_content_id.split("?")[0];
         const segment = decodeURIComponent(clean.split("/").pop() ?? "");
         return segment || draft.media_content_id;
+    }
+    _coverDisplayName(draft) {
+        if (draft.cover_media?.metadata?.title) {
+            return draft.cover_media.metadata.title;
+        }
+        if (!draft.image)
+            return undefined;
+        const clean = draft.image.split("?")[0];
+        const segment = decodeURIComponent(clean.split("/").pop() ?? "");
+        return segment || draft.image;
     }
     // ---- rendering ----------------------------------------------------------
     render() {
@@ -845,6 +898,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     }
     _renderStoryRow(story, lib) {
         const editingThis = this._storyDraft?.id === story.id;
+        const thumb = this._storyThumb(story);
         const stats = lib.stats[story.id];
         const meta = [];
         if (story.duration_min)
@@ -858,9 +912,9 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
       <div class="story-row ${editingThis ? "editing" : ""}">
         <span
           class="story-thumb"
-          style=${story.image ? `background-image:url("${story.image}")` : ""}
+          style=${thumb ? `background-image:url("${thumb}")` : ""}
         >
-          ${!story.image
+          ${!thumb
             ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
             : A}
         </span>
@@ -957,27 +1011,32 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         const mediaSchema = [
             { name: "media", selector: { media: { accept: ["audio/*"] } } },
         ];
-        const coverUrlSchema = [{ name: "image", selector: { text: {} } }];
+        const coverSchema = [
+            { name: "cover_media", selector: { media: { accept: ["image/*"] } } },
+        ];
         const advancedSchema = [
             { name: "media_content_id", selector: { text: {} } },
             { name: "media_content_type", selector: { text: {} } },
+            { name: "image", selector: { text: {} } },
         ];
         const labels = {
             title: this._l("title"),
             category_id: this._l("category"),
             duration_min: this._l("duration"),
-            image: this._l("image_url"),
             media: this._l("media"),
             media_content_id: this._l("media_content_id"),
             media_content_type: this._l("media_content_type"),
+            image: this._l("image_url"),
         };
         const helpers = {
             duration_min: this._l("duration_help"),
             media_content_id: this._l("media_content_id_help"),
+            image: this._l("image_url_help"),
         };
         const computeLabel = (s) => labels[s.name] ?? s.name;
         const computeHelper = (s) => helpers[s.name];
         const mediaName = this._mediaDisplayName(draft);
+        const coverName = this._coverDisplayName(draft);
         return b `
       <div class="form-panel">
         <div class="form-title">
@@ -1025,56 +1084,24 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             <span>${this._l("cover")}</span>
           </div>
           <div class="field-help">${this._l("cover_help")}</div>
-          <div class="cover-row">
+          <ha-form
+            .hass=${this.hass}
+            .data=${draft}
+            .schema=${coverSchema}
+            .computeLabel=${this._noLabel}
+            @value-changed=${this._storyFormChanged}
+          ></ha-form>
+          <div class="media-status ${draft.image ? "ok" : ""}">
+            <ha-icon
+              icon=${draft.image
+            ? "mdi:check-circle"
+            : "mdi:image-off-outline"}
+            ></ha-icon>
             <span
-              class="cover-preview ${draft.image ? "" : "placeholder"}"
-              style=${draft.image
-            ? `background-image:url("${draft.image}")`
-            : ""}
+              >${draft.image
+            ? `${this._l("cover_selected")}: ${coverName}`
+            : this._l("cover_none")}</span
             >
-              ${!draft.image
-            ? b `<ha-icon icon="mdi:image-off-outline"></ha-icon>`
-            : A}
-            </span>
-            <div class="cover-controls">
-              <div class="cover-buttons">
-                <mwc-button
-                  outlined
-                  .disabled=${this._uploading}
-                  @click=${(ev) => ev.currentTarget
-            .nextElementSibling.click()}
-                >
-                  <ha-icon slot="icon" icon="mdi:upload"></ha-icon>
-                  ${this._uploading
-            ? this._l("uploading")
-            : this._l("upload_image")}
-                </mwc-button>
-                <input
-                  class="file-input"
-                  type="file"
-                  accept="image/*"
-                  @change=${this._uploadCover}
-                />
-                ${draft.image
-            ? b `
-                      <ha-icon-button
-                        class="danger"
-                        .label=${this._l("remove_image")}
-                        @click=${() => (this._storyDraft = { ...draft, image: null })}
-                      >
-                        <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-                      </ha-icon-button>
-                    `
-            : A}
-              </div>
-              <ha-form
-                .hass=${this.hass}
-                .data=${draft}
-                .schema=${coverUrlSchema}
-                .computeLabel=${computeLabel}
-                @value-changed=${this._storyFormChanged}
-              ></ha-form>
-            </div>
           </div>
         </div>
 
@@ -1358,43 +1385,6 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     .media-status ha-icon {
       --mdc-icon-size: 16px;
     }
-    .cover-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .cover-preview {
-      width: 96px;
-      height: 96px;
-      border-radius: 8px;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--divider-color);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--disabled-text-color, var(--secondary-text-color));
-    }
-    .cover-preview.placeholder {
-      background: var(--card-background-color);
-      border-style: dashed;
-    }
-    .cover-controls {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .cover-buttons {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .file-input {
-      display: none;
-    }
     .advanced-toggle {
       display: flex;
       align-items: center;
@@ -1453,6 +1443,9 @@ __decorate([
 ], BedtimeStoriesCardEditor.prototype, "_library", void 0);
 __decorate([
     r()
+], BedtimeStoriesCardEditor.prototype, "_covers", void 0);
+__decorate([
+    r()
 ], BedtimeStoriesCardEditor.prototype, "_formReady", void 0);
 __decorate([
     r()
@@ -1463,9 +1456,6 @@ __decorate([
 __decorate([
     r()
 ], BedtimeStoriesCardEditor.prototype, "_storyAdvanced", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_uploading", void 0);
 __decorate([
     r()
 ], BedtimeStoriesCardEditor.prototype, "_error", void 0);
@@ -1484,6 +1474,8 @@ const DEFAULT_DESC = ["play_count", "last_played"];
 let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
     constructor() {
         super(...arguments);
+        /** story.id → resolved cover URL, for images stored as media-source ids. */
+        this._covers = {};
         this._justPlayed = null;
     }
     static getConfigElement() {
@@ -1537,6 +1529,7 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         this._unsubscribe = subscribeLibrary(this.hass, (snapshot) => {
             this._library = snapshot;
             this._error = undefined;
+            void this._resolveCovers(snapshot);
         }, this._config.entry_id);
         this._unsubscribe.catch((err) => {
             this._unsubscribe = undefined;
@@ -1700,6 +1693,30 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         const filter = this._config?.categories ?? [];
         return lib.categories.filter((c) => filter.length === 0 || filter.includes(c.id));
     }
+    /** Resolve any media-source cover ids into displayable URLs. */
+    async _resolveCovers(lib) {
+        if (!this.hass)
+            return;
+        const updates = {};
+        await Promise.all(lib.stories.map(async (story) => {
+            if (!isMediaSource(story.image))
+                return;
+            const url = await resolveImage(this.hass, story.image);
+            if (url && url !== this._covers[story.id])
+                updates[story.id] = url;
+        }));
+        if (Object.keys(updates).length) {
+            this._covers = { ...this._covers, ...updates };
+        }
+    }
+    /** Direct URLs pass through; media-source ids use the resolved cache. */
+    _coverUrl(story) {
+        if (!story.image)
+            return null;
+        if (isMediaSource(story.image))
+            return this._covers[story.id] ?? null;
+        return story.image;
+    }
     _statsLine(story) {
         const stats = this._library?.stats[story.id];
         if (!stats || stats.play_count === 0) {
@@ -1813,14 +1830,15 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         const config = this._config;
         const isPlaying = playing === story.id;
         const justPlayed = this._justPlayed === story.id;
+        const cover = this._coverUrl(story);
         return b `
       <button
         class=${e({ tile: true, playing: isPlaying })}
-        style=${o(story.image ? { backgroundImage: `url("${story.image}")` } : {})}
+        style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
         aria-label=${story.title}
         @click=${() => this._play(story)}
       >
-        ${!story.image
+        ${!cover
             ? b `<ha-icon class="fallback" icon="mdi:book-open-variant"></ha-icon>`
             : A}
         ${config.show_duration && story.duration_min
@@ -1851,6 +1869,7 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         const config = this._config;
         const isPlaying = playing === story.id;
         const justPlayed = this._justPlayed === story.id;
+        const cover = this._coverUrl(story);
         return b `
       <button
         class=${e({ row: true, playing: isPlaying })}
@@ -1859,9 +1878,9 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
       >
         <span
           class="thumb"
-          style=${o(story.image ? { backgroundImage: `url("${story.image}")` } : {})}
+          style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
         >
-          ${!story.image
+          ${!cover
             ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
             : A}
           ${isPlaying
@@ -2225,6 +2244,9 @@ __decorate([
 ], BedtimeStoriesCard.prototype, "_library", void 0);
 __decorate([
     r()
+], BedtimeStoriesCard.prototype, "_covers", void 0);
+__decorate([
+    r()
 ], BedtimeStoriesCard.prototype, "_error", void 0);
 __decorate([
     r()
@@ -2244,7 +2266,7 @@ window.customCards.push({
     documentationURL: "https://github.com/florianbaethge/bedtime_stories",
 });
 // eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.0"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
+console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.1"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
 
 export { BedtimeStoriesCard };
 //# sourceMappingURL=bedtime-stories-card.js.map

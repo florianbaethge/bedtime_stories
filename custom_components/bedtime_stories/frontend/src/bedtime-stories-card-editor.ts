@@ -12,6 +12,7 @@ import {
 } from "./api";
 import { fireEvent } from "./fire-event";
 import { localize } from "./i18n";
+import { isMediaSource, resolveImage } from "./media-image";
 import {
   DEFAULT_CONFIG,
   type BedtimeStoriesCardConfig,
@@ -38,6 +39,7 @@ interface StoryDraft {
   media_content_id: string;
   media_content_type: string;
   media?: MediaSelectorValue;
+  cover_media?: MediaSelectorValue;
 }
 
 interface CategoryDraft {
@@ -80,6 +82,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   @state() private _library?: LibrarySnapshot;
 
+  /** story.id → resolved cover URL, for images stored as media-source ids. */
+  @state() private _covers: Record<string, string> = {};
+
   @state() private _formReady = false;
 
   @state() private _categoryDraft: CategoryDraft | null = null;
@@ -87,8 +92,6 @@ export class BedtimeStoriesCardEditor extends LitElement {
   @state() private _storyDraft: StoryDraft | null = null;
 
   @state() private _storyAdvanced = false;
-
-  @state() private _uploading = false;
 
   @state() private _error?: string;
 
@@ -136,6 +139,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
       (snapshot) => {
         this._library = snapshot;
         this._error = undefined;
+        void this._resolveCovers(snapshot);
       },
       this._config?.entry_id || undefined
     );
@@ -147,6 +151,29 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private _l(key: string, vars?: Record<string, string | number>): string {
     return localize(this.hass, key, vars);
+  }
+
+  /** Resolve any media-source cover ids into displayable thumbnail URLs. */
+  private async _resolveCovers(lib: LibrarySnapshot): Promise<void> {
+    if (!this.hass) return;
+    const updates: Record<string, string> = {};
+    await Promise.all(
+      lib.stories.map(async (story) => {
+        if (!isMediaSource(story.image)) return;
+        const url = await resolveImage(this.hass!, story.image);
+        if (url && url !== this._covers[story.id]) updates[story.id] = url;
+      })
+    );
+    if (Object.keys(updates).length) {
+      this._covers = { ...this._covers, ...updates };
+    }
+  }
+
+  /** Direct URLs pass through; media-source ids use the resolved cache. */
+  private _storyThumb(story: Story): string | null {
+    if (!story.image) return null;
+    if (isMediaSource(story.image)) return this._covers[story.id] ?? null;
+    return story.image;
   }
 
   // ---- settings forms ------------------------------------------------------
@@ -300,6 +327,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
     return undefined;
   };
 
+  /** The cover section has its own header, so the image selector stays unlabeled. */
+  private _noLabel = (): string => "";
+
   private _settingsChanged(ev: CustomEvent): void {
     ev.stopPropagation();
     const value = ev.detail.value as BedtimeStoriesCardConfig;
@@ -354,6 +384,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
             media_content_id: story.media_content_id,
             media_content_type: story.media_content_type,
           },
+          cover_media: isMediaSource(story.image)
+            ? { media_content_id: story.image, media_content_type: "image/*" }
+            : undefined,
         }
       : {
           category_id: categoryId,
@@ -387,7 +420,8 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private async _saveStory(): Promise<void> {
     if (!this.hass || !this._storyDraft) return;
-    const { media: _media, ...story } = this._storyDraft;
+    const { media: _media, cover_media: _coverMedia, ...story } =
+      this._storyDraft;
     try {
       await saveStory(this.hass, { ...story }, this._entryId);
       this._storyDraft = null;
@@ -436,37 +470,17 @@ export class BedtimeStoriesCardEditor extends LitElement {
         draft.title = media.metadata.title;
       }
     }
-    this._storyDraft = draft;
-  }
-
-  private async _uploadCover(ev: Event): Promise<void> {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file || !this.hass || !this._storyDraft) return;
-    this._uploading = true;
-    this._error = undefined;
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const resp = await this.hass.fetchWithAuth("/api/image/upload", {
-        method: "POST",
-        body: form,
-      });
-      if (!resp.ok) {
-        throw new Error(`${this._l("upload_failed")} (HTTP ${resp.status})`);
-      }
-      const data = (await resp.json()) as { id: string };
-      this._storyDraft = {
-        ...this._storyDraft,
-        image: `/api/image/serve/${data.id}/512x512`,
-      };
-    } catch (err) {
-      this._error =
-        (err as { message?: string })?.message ?? this._l("upload_failed");
-    } finally {
-      this._uploading = false;
+    // Copy the cover image pick (a media-source id) into the image field;
+    // clearing the picker clears the image too.
+    const coverMedia = value.cover_media;
+    if (
+      coverMedia &&
+      coverMedia.media_content_id !==
+        this._storyDraft?.cover_media?.media_content_id
+    ) {
+      draft.image = coverMedia.media_content_id || null;
     }
+    this._storyDraft = draft;
   }
 
   private _mediaDisplayName(draft: StoryDraft): string | undefined {
@@ -475,6 +489,16 @@ export class BedtimeStoriesCardEditor extends LitElement {
     const clean = draft.media_content_id.split("?")[0];
     const segment = decodeURIComponent(clean.split("/").pop() ?? "");
     return segment || draft.media_content_id;
+  }
+
+  private _coverDisplayName(draft: StoryDraft): string | undefined {
+    if (draft.cover_media?.metadata?.title) {
+      return draft.cover_media.metadata.title;
+    }
+    if (!draft.image) return undefined;
+    const clean = draft.image.split("?")[0];
+    const segment = decodeURIComponent(clean.split("/").pop() ?? "");
+    return segment || draft.image;
   }
 
   // ---- rendering ----------------------------------------------------------
@@ -606,6 +630,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private _renderStoryRow(story: Story, lib: LibrarySnapshot): TemplateResult {
     const editingThis = this._storyDraft?.id === story.id;
+    const thumb = this._storyThumb(story);
     const stats = lib.stats[story.id];
     const meta: string[] = [];
     if (story.duration_min) meta.push(`~${story.duration_min}m`);
@@ -620,9 +645,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
       <div class="story-row ${editingThis ? "editing" : ""}">
         <span
           class="story-thumb"
-          style=${story.image ? `background-image:url("${story.image}")` : ""}
+          style=${thumb ? `background-image:url("${thumb}")` : ""}
         >
-          ${!story.image
+          ${!thumb
             ? html`<ha-icon icon="mdi:book-open-variant"></ha-icon>`
             : nothing}
         </span>
@@ -721,27 +746,32 @@ export class BedtimeStoriesCardEditor extends LitElement {
     const mediaSchema = [
       { name: "media", selector: { media: { accept: ["audio/*"] } } },
     ];
-    const coverUrlSchema = [{ name: "image", selector: { text: {} } }];
+    const coverSchema = [
+      { name: "cover_media", selector: { media: { accept: ["image/*"] } } },
+    ];
     const advancedSchema = [
       { name: "media_content_id", selector: { text: {} } },
       { name: "media_content_type", selector: { text: {} } },
+      { name: "image", selector: { text: {} } },
     ];
     const labels: Record<string, string> = {
       title: this._l("title"),
       category_id: this._l("category"),
       duration_min: this._l("duration"),
-      image: this._l("image_url"),
       media: this._l("media"),
       media_content_id: this._l("media_content_id"),
       media_content_type: this._l("media_content_type"),
+      image: this._l("image_url"),
     };
     const helpers: Record<string, string> = {
       duration_min: this._l("duration_help"),
       media_content_id: this._l("media_content_id_help"),
+      image: this._l("image_url_help"),
     };
     const computeLabel = (s: { name: string }) => labels[s.name] ?? s.name;
     const computeHelper = (s: { name: string }) => helpers[s.name];
     const mediaName = this._mediaDisplayName(draft);
+    const coverName = this._coverDisplayName(draft);
     return html`
       <div class="form-panel">
         <div class="form-title">
@@ -789,60 +819,24 @@ export class BedtimeStoriesCardEditor extends LitElement {
             <span>${this._l("cover")}</span>
           </div>
           <div class="field-help">${this._l("cover_help")}</div>
-          <div class="cover-row">
+          <ha-form
+            .hass=${this.hass}
+            .data=${draft}
+            .schema=${coverSchema}
+            .computeLabel=${this._noLabel}
+            @value-changed=${this._storyFormChanged}
+          ></ha-form>
+          <div class="media-status ${draft.image ? "ok" : ""}">
+            <ha-icon
+              icon=${draft.image
+                ? "mdi:check-circle"
+                : "mdi:image-off-outline"}
+            ></ha-icon>
             <span
-              class="cover-preview ${draft.image ? "" : "placeholder"}"
-              style=${draft.image
-                ? `background-image:url("${draft.image}")`
-                : ""}
+              >${draft.image
+                ? `${this._l("cover_selected")}: ${coverName}`
+                : this._l("cover_none")}</span
             >
-              ${!draft.image
-                ? html`<ha-icon icon="mdi:image-off-outline"></ha-icon>`
-                : nothing}
-            </span>
-            <div class="cover-controls">
-              <div class="cover-buttons">
-                <mwc-button
-                  outlined
-                  .disabled=${this._uploading}
-                  @click=${(ev: Event) =>
-                    (
-                      (ev.currentTarget as HTMLElement)
-                        .nextElementSibling as HTMLInputElement
-                    ).click()}
-                >
-                  <ha-icon slot="icon" icon="mdi:upload"></ha-icon>
-                  ${this._uploading
-                    ? this._l("uploading")
-                    : this._l("upload_image")}
-                </mwc-button>
-                <input
-                  class="file-input"
-                  type="file"
-                  accept="image/*"
-                  @change=${this._uploadCover}
-                />
-                ${draft.image
-                  ? html`
-                      <ha-icon-button
-                        class="danger"
-                        .label=${this._l("remove_image")}
-                        @click=${() =>
-                          (this._storyDraft = { ...draft, image: null })}
-                      >
-                        <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-                      </ha-icon-button>
-                    `
-                  : nothing}
-              </div>
-              <ha-form
-                .hass=${this.hass}
-                .data=${draft}
-                .schema=${coverUrlSchema}
-                .computeLabel=${computeLabel}
-                @value-changed=${this._storyFormChanged}
-              ></ha-form>
-            </div>
           </div>
         </div>
 
@@ -1126,43 +1120,6 @@ export class BedtimeStoriesCardEditor extends LitElement {
     }
     .media-status ha-icon {
       --mdc-icon-size: 16px;
-    }
-    .cover-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .cover-preview {
-      width: 96px;
-      height: 96px;
-      border-radius: 8px;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--divider-color);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--disabled-text-color, var(--secondary-text-color));
-    }
-    .cover-preview.placeholder {
-      background: var(--card-background-color);
-      border-style: dashed;
-    }
-    .cover-controls {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .cover-buttons {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .file-input {
-      display: none;
     }
     .advanced-toggle {
       display: flex;

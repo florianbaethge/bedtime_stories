@@ -15,9 +15,10 @@ target on top.
 - **Full-width dashboard card** with a graphical editor (no YAML required)
 - **Categories** shown as sub-headers with icons (e.g. "Allgemein",
   "Astrid Lindgren", "Märchen")
-- **Stories** with title, cover image (upload via the image selector),
-  duration badge (`~20m`) and a media file picked from the media browser
-  (local media upload works there too) or any URL
+- **Stories** with title, cover image (browse existing images or upload via
+  the media picker — same dialog as the audio file), duration badge (`~20m`)
+  and a media file picked from the media browser (local media upload works
+  there too) or any URL
 - **Layout options**: grid with column count, or list with cozy/compact
   density, show/hide titles and duration
 - **Play statistics**: optional per-tile line ("12× gehört · vor 2 Tagen"),
@@ -78,10 +79,12 @@ YAML mode add `/bedtime_stories/bedtime-stories-card.js` as a module resource).
 
 The media picker browses your Home Assistant media sources, including
 *My media* (`/media`), where you can upload MP3/M4A files directly in the
-browse dialog. Existing `media-source://media_source/local/...` IDs from your
-old `picture-glance` cards can be pasted into the *Media URL / content id*
-field as-is, and cover URLs like `/api/image/serve/<id>/512x512` keep working
-in the image field.
+browse dialog. The **cover image** uses the same picker (filtered to images),
+so you can browse existing cover art or upload a new picture the same way.
+Existing `media-source://media_source/local/...` IDs from your old
+`picture-glance` cards can be pasted into the *Media URL / content id* field
+as-is, and cover URLs like `/api/image/serve/<id>/512x512` still work — paste
+them into the cover's *Advanced* URL field.
 
 ## Card options
 

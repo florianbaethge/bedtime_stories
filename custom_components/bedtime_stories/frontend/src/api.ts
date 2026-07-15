@@ -16,6 +16,16 @@ function withEntry(
 export const listEntries = (hass: HomeAssistant): Promise<EntryRow[]> =>
   hass.callWS({ type: `${D}/entries/list` });
 
+/** Resolve a `media-source://…` id to a directly usable (signed) URL. */
+export const resolveMediaSource = (
+  hass: HomeAssistant,
+  mediaContentId: string
+): Promise<{ url: string; mime_type: string }> =>
+  hass.callWS({
+    type: "media_source/resolve_media",
+    media_content_id: mediaContentId,
+  });
+
 export const getLibrary = (
   hass: HomeAssistant,
   entryId?: string

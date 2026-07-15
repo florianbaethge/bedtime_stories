@@ -29,13 +29,13 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     media_none: "No media file selected yet",
     media_help:
       "Browse Home Assistant media — files can be uploaded to “My media” right in the browse dialog.",
+    cover_selected: "Selected image",
+    cover_none: "No cover image selected yet",
     cover_help:
-      "Upload a picture or paste an image URL. Existing covers like /api/image/serve/… keep working.",
-    upload_image: "Upload picture",
-    uploading: "Uploading…",
-    upload_failed: "Upload failed",
-    remove_image: "Remove picture",
-    image_url: "…or image URL",
+      "Pick a cover from Home Assistant media — browse existing images or upload one, just like the audio file.",
+    image_url: "Cover image URL / content id",
+    image_url_help:
+      "Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",
     duration_help: "Shown as a badge on the tile, e.g. “~20m”.",
     media_content_id_help:
       "Direct media-source URI or stream URL — overrides the picked media.",
@@ -117,13 +117,13 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     media_none: "Noch keine Mediendatei ausgewählt",
     media_help:
       "Durchsuche die Home-Assistant-Medien — Dateien kannst du direkt im Dialog unter „Meine Medien“ hochladen.",
+    cover_selected: "Ausgewähltes Bild",
+    cover_none: "Noch kein Cover-Bild ausgewählt",
     cover_help:
-      "Bild hochladen oder Bild-URL einfügen. Bestehende Cover wie /api/image/serve/… funktionieren weiter.",
-    upload_image: "Bild hochladen",
-    uploading: "Wird hochgeladen…",
-    upload_failed: "Upload fehlgeschlagen",
-    remove_image: "Bild entfernen",
-    image_url: "…oder Bild-URL",
+      "Wähle ein Cover aus den Home-Assistant-Medien — bestehende Bilder durchsuchen oder hochladen, genau wie die Audiodatei.",
+    image_url: "Cover-Bild-URL / Content-ID",
+    image_url_help:
+      "Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",
     duration_help: "Wird als Badge auf der Kachel angezeigt, z. B. „~20m“.",
     media_content_id_help:
       "Direkte media-source-URI oder Stream-URL — übersteuert die ausgewählte Datei.",
