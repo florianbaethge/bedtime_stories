@@ -736,33 +736,75 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   // ---- direct upload to "My media" -----------------------------------------
 
+  private static readonly _LOCAL_PREFIX = "media-source://media_source/local";
+
   /** Find a writable local media_source folder to upload into (cached). */
   private async _localMediaFolder(): Promise<string | null> {
     if (this._uploadFolder) return this._uploadFolder;
-    if (!this.hass) return null;
-    const isLocal = (id?: string): id is string =>
-      !!id && id.startsWith("media-source://media_source/local");
-    try {
-      const root = await this.hass.callWS<MediaSourceItem>({
-        type: "media_source/browse_media",
-      });
-      const local = (root.children ?? []).find((c) =>
-        isLocal(c.media_content_id)
-      );
-      if (!isLocal(local?.media_content_id)) return null;
-      const branch = await this.hass.callWS<MediaSourceItem>({
-        type: "media_source/browse_media",
-        media_content_id: local.media_content_id,
-      });
-      // Upload needs a concrete media directory, not the bare local root.
-      const dir = (branch.children ?? []).find(
-        (c) => c.can_expand && isLocal(c.media_content_id)
-      );
-      this._uploadFolder = (dir ?? local).media_content_id;
-      return this._uploadFolder ?? null;
-    } catch {
-      return null;
+    const folder =
+      this._folderFromExistingMedia() ?? (await this._browseForLocalFolder());
+    if (folder) this._uploadFolder = folder;
+    return folder;
+  }
+
+  /**
+   * Most reliable: reuse the folder an existing story's media/cover already
+   * lives in. It's a real local folder in this instance's exact id format, so
+   * no assumptions about the media_source layout are needed.
+   */
+  private _folderFromExistingMedia(): string | null {
+    const prefix = BedtimeStoriesCardEditor._LOCAL_PREFIX;
+    for (const story of this._library?.stories ?? []) {
+      for (const id of [story.media_content_id, story.image]) {
+        if (!id || !id.startsWith(prefix)) continue;
+        const clean = id.split("?")[0];
+        const slash = clean.lastIndexOf("/");
+        // Require at least one path segment after the prefix (a concrete dir).
+        if (slash > prefix.length) return clean.slice(0, slash);
+      }
     }
+    return null;
+  }
+
+  /** Fallback: browse the local media source for a writable directory. */
+  private async _browseForLocalFolder(): Promise<string | null> {
+    if (!this.hass) return null;
+    const prefix = BedtimeStoriesCardEditor._LOCAL_PREFIX;
+    const isLocal = (id?: string): id is string =>
+      !!id && id.startsWith(prefix);
+    const browse = async (
+      id: string
+    ): Promise<MediaSourceItem | undefined> => {
+      try {
+        return await this.hass!.callWS<MediaSourceItem>({
+          type: "media_source/browse_media",
+          media_content_id: id,
+        });
+      } catch {
+        return undefined;
+      }
+    };
+    // Reach the local source root from a few likely entry points.
+    let node: MediaSourceItem | undefined;
+    for (const root of ["", "media-source://", `${prefix}/.`, prefix]) {
+      const item = await browse(root);
+      if (!item) continue;
+      if (isLocal(item.media_content_id)) {
+        node = item;
+        break;
+      }
+      const child = (item.children ?? []).find((c) => isLocal(c.media_content_id));
+      if (child) {
+        node = await browse(child.media_content_id!);
+        break;
+      }
+    }
+    if (!node) return null;
+    // Descend into a concrete directory when the node lists folders.
+    const dir = (node.children ?? []).find(
+      (c) => c.can_expand && isLocal(c.media_content_id)
+    );
+    return (dir?.media_content_id ?? node.media_content_id) ?? null;
   }
 
   private async _uploadToLocal(file: File): Promise<string | null> {

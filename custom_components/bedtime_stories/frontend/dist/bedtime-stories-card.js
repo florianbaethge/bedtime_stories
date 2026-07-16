@@ -407,6 +407,7 @@ function fireEvent(node, type, detail) {
     node.dispatchEvent(event);
 }
 
+var BedtimeStoriesCardEditor_1;
 /** Force-load ha-form and friends (they ship with the entities card editor). */
 async function loadHaForm() {
     if (customElements.get("ha-form"))
@@ -454,6 +455,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             this._dragOverId = undefined;
         };
     }
+    static { BedtimeStoriesCardEditor_1 = this; }
     setConfig(config) {
         this._config = { ...config };
         this._connectLibrary();
@@ -990,32 +992,74 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         return segment || draft.image;
     }
     // ---- direct upload to "My media" -----------------------------------------
+    static { this._LOCAL_PREFIX = "media-source://media_source/local"; }
     /** Find a writable local media_source folder to upload into (cached). */
     async _localMediaFolder() {
         if (this._uploadFolder)
             return this._uploadFolder;
+        const folder = this._folderFromExistingMedia() ?? (await this._browseForLocalFolder());
+        if (folder)
+            this._uploadFolder = folder;
+        return folder;
+    }
+    /**
+     * Most reliable: reuse the folder an existing story's media/cover already
+     * lives in. It's a real local folder in this instance's exact id format, so
+     * no assumptions about the media_source layout are needed.
+     */
+    _folderFromExistingMedia() {
+        const prefix = BedtimeStoriesCardEditor_1._LOCAL_PREFIX;
+        for (const story of this._library?.stories ?? []) {
+            for (const id of [story.media_content_id, story.image]) {
+                if (!id || !id.startsWith(prefix))
+                    continue;
+                const clean = id.split("?")[0];
+                const slash = clean.lastIndexOf("/");
+                // Require at least one path segment after the prefix (a concrete dir).
+                if (slash > prefix.length)
+                    return clean.slice(0, slash);
+            }
+        }
+        return null;
+    }
+    /** Fallback: browse the local media source for a writable directory. */
+    async _browseForLocalFolder() {
         if (!this.hass)
             return null;
-        const isLocal = (id) => !!id && id.startsWith("media-source://media_source/local");
-        try {
-            const root = await this.hass.callWS({
-                type: "media_source/browse_media",
-            });
-            const local = (root.children ?? []).find((c) => isLocal(c.media_content_id));
-            if (!isLocal(local?.media_content_id))
-                return null;
-            const branch = await this.hass.callWS({
-                type: "media_source/browse_media",
-                media_content_id: local.media_content_id,
-            });
-            // Upload needs a concrete media directory, not the bare local root.
-            const dir = (branch.children ?? []).find((c) => c.can_expand && isLocal(c.media_content_id));
-            this._uploadFolder = (dir ?? local).media_content_id;
-            return this._uploadFolder ?? null;
+        const prefix = BedtimeStoriesCardEditor_1._LOCAL_PREFIX;
+        const isLocal = (id) => !!id && id.startsWith(prefix);
+        const browse = async (id) => {
+            try {
+                return await this.hass.callWS({
+                    type: "media_source/browse_media",
+                    media_content_id: id,
+                });
+            }
+            catch {
+                return undefined;
+            }
+        };
+        // Reach the local source root from a few likely entry points.
+        let node;
+        for (const root of ["", "media-source://", `${prefix}/.`, prefix]) {
+            const item = await browse(root);
+            if (!item)
+                continue;
+            if (isLocal(item.media_content_id)) {
+                node = item;
+                break;
+            }
+            const child = (item.children ?? []).find((c) => isLocal(c.media_content_id));
+            if (child) {
+                node = await browse(child.media_content_id);
+                break;
+            }
         }
-        catch {
+        if (!node)
             return null;
-        }
+        // Descend into a concrete directory when the node lists folders.
+        const dir = (node.children ?? []).find((c) => c.can_expand && isLocal(c.media_content_id));
+        return (dir?.media_content_id ?? node.media_content_id) ?? null;
     }
     async _uploadToLocal(file) {
         const folder = await this._localMediaFolder();
@@ -1920,7 +1964,7 @@ __decorate([
 __decorate([
     r()
 ], BedtimeStoriesCardEditor.prototype, "_dragOverId", void 0);
-BedtimeStoriesCardEditor = __decorate([
+BedtimeStoriesCardEditor = BedtimeStoriesCardEditor_1 = __decorate([
     t$1("bedtime-stories-card-editor")
 ], BedtimeStoriesCardEditor);
 
