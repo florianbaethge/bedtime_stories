@@ -5,6 +5,8 @@ import {
   deleteCategory,
   deleteStory,
   listEntries,
+  reorderCategories,
+  reorderStories,
   resetStats,
   saveCategory,
   saveStory,
@@ -103,6 +105,15 @@ export class BedtimeStoriesCardEditor extends LitElement {
   private _contentTimer?: ReturnType<typeof setTimeout>;
 
   private _savingContent = false;
+
+  /** Drag-to-reorder state (native HTML5 drag & drop). */
+  @state() private _dragOverId?: string;
+
+  private _dragKind?: "category" | "story";
+
+  private _dragId?: string;
+
+  private _dragCategoryId?: string;
 
   public setConfig(config: BedtimeStoriesCardConfig): void {
     this._config = { ...config };
@@ -459,7 +470,19 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private async _resetStoryStats(): Promise<void> {
     if (!this.hass || !this._storyDraft?.id) return;
-    await resetStats(this.hass, this._storyDraft.id, this._entryId);
+    if (!window.confirm(this._l("confirm_reset_stats"))) return;
+    try {
+      await resetStats(this.hass, this._storyDraft.id, this._entryId);
+    } catch (err) {
+      this._error = (err as { message?: string })?.message;
+    }
+  }
+
+  private _playCountText(storyId: string): string {
+    const count = this._library?.stats[storyId]?.play_count ?? 0;
+    if (count === 0) return this._l("played_never");
+    if (count === 1) return this._l("played_once");
+    return this._l("played_times", { count });
   }
 
   private _clearContentTimer(): void {
@@ -517,6 +540,124 @@ export class BedtimeStoriesCardEditor extends LitElement {
     this._clearContentTimer();
     await this._autoSaveContent();
     this._categoryDraft = null;
+  }
+
+  // ---- drag & drop reordering ----------------------------------------------
+
+  private _renderDragHandle(
+    kind: "category" | "story",
+    id: string,
+    categoryId?: string
+  ): TemplateResult {
+    return html`
+      <span
+        class="drag-handle"
+        draggable="true"
+        title=${this._l("drag_reorder")}
+        @dragstart=${(ev: DragEvent) =>
+          this._dragStart(kind, id, categoryId, ev)}
+        @dragend=${this._dragEnd}
+      >
+        <ha-icon icon="mdi:drag-vertical"></ha-icon>
+      </span>
+    `;
+  }
+
+  private _dragStart(
+    kind: "category" | "story",
+    id: string,
+    categoryId: string | undefined,
+    ev: DragEvent
+  ): void {
+    this._dragKind = kind;
+    this._dragId = id;
+    this._dragCategoryId = categoryId;
+    if (ev.dataTransfer) {
+      ev.dataTransfer.effectAllowed = "move";
+      ev.dataTransfer.setData("text/plain", id);
+      const row = (ev.currentTarget as HTMLElement).closest(
+        kind === "category" ? ".category-card" : ".story-row"
+      );
+      if (row) ev.dataTransfer.setDragImage(row, 24, 16);
+    }
+  }
+
+  private _dragEnd = (): void => {
+    this._dragKind = undefined;
+    this._dragId = undefined;
+    this._dragCategoryId = undefined;
+    this._dragOverId = undefined;
+  };
+
+  private _dragOver(
+    kind: "category" | "story",
+    targetId: string,
+    categoryId: string | undefined,
+    ev: DragEvent
+  ): void {
+    if (this._dragKind !== kind) return;
+    if (kind === "story" && this._dragCategoryId !== categoryId) return;
+    ev.preventDefault(); // allow the drop
+    if (ev.dataTransfer) ev.dataTransfer.dropEffect = "move";
+    if (this._dragOverId !== targetId) this._dragOverId = targetId;
+  }
+
+  private _drop(
+    kind: "category" | "story",
+    targetId: string,
+    categoryId: string | undefined,
+    ev: DragEvent
+  ): void {
+    // Kind mismatch (e.g. a category dropped on a story row): let the event
+    // bubble to the matching drop target instead of swallowing it here.
+    if (this._dragKind !== kind) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const dragged = this._dragId;
+    if (!dragged || dragged === targetId || !this.hass) {
+      this._dragEnd();
+      return;
+    }
+    const el = ev.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const after = ev.clientY > rect.top + rect.height / 2;
+    if (kind === "category") {
+      const ids = this._moveInList(
+        (this._library?.categories ?? []).map((c) => c.id),
+        dragged,
+        targetId,
+        after
+      );
+      void reorderCategories(this.hass, ids, this._entryId).catch(
+        (err: { message?: string }) => (this._error = err?.message)
+      );
+    } else if (categoryId && this._dragCategoryId === categoryId) {
+      const ids = this._moveInList(
+        (this._library?.stories ?? [])
+          .filter((s) => s.category_id === categoryId)
+          .map((s) => s.id),
+        dragged,
+        targetId,
+        after
+      );
+      void reorderStories(this.hass, ids, this._entryId).catch(
+        (err: { message?: string }) => (this._error = err?.message)
+      );
+    }
+    this._dragEnd();
+  }
+
+  private _moveInList(
+    ids: string[],
+    draggedId: string,
+    targetId: string,
+    after: boolean
+  ): string[] {
+    const result = ids.filter((id) => id !== draggedId);
+    const idx = result.indexOf(targetId);
+    if (idx < 0) return ids;
+    result.splice(after ? idx + 1 : idx, 0, draggedId);
+    return result;
   }
 
   private _categoryFormChanged(ev: CustomEvent): void {
@@ -658,8 +799,17 @@ export class BedtimeStoriesCardEditor extends LitElement {
     const stories = lib.stories.filter((s) => s.category_id === category.id);
     const editingThis = this._categoryDraft?.id === category.id;
     return html`
-      <div class="category-card">
+      <div
+        class="category-card ${this._dragOverId === category.id
+          ? "drag-over"
+          : ""}"
+        @dragover=${(ev: DragEvent) =>
+          this._dragOver("category", category.id, undefined, ev)}
+        @drop=${(ev: DragEvent) =>
+          this._drop("category", category.id, undefined, ev)}
+      >
         <div class="category-head">
+          ${this._renderDragHandle("category", category.id)}
           <div class="icon-chip">
             <ha-icon icon=${category.icon || "mdi:teddy-bear"}></ha-icon>
           </div>
@@ -718,7 +868,17 @@ export class BedtimeStoriesCardEditor extends LitElement {
       );
     }
     return html`
-      <div class="story-row ${editingThis ? "editing" : ""}">
+      <div
+        class="story-row ${editingThis ? "editing" : ""} ${this._dragOverId ===
+        story.id
+          ? "drag-over"
+          : ""}"
+        @dragover=${(ev: DragEvent) =>
+          this._dragOver("story", story.id, story.category_id, ev)}
+        @drop=${(ev: DragEvent) =>
+          this._drop("story", story.id, story.category_id, ev)}
+      >
+        ${this._renderDragHandle("story", story.id, story.category_id)}
         <span
           class="story-thumb"
           style=${thumb ? `background-image:url("${thumb}")` : ""}
@@ -951,7 +1111,18 @@ export class BedtimeStoriesCardEditor extends LitElement {
                           >${this._l("story_id_hint")}:
                           <code>${draft.id}</code></span
                         >
-                        <mwc-button dense @click=${this._resetStoryStats}>
+                      </div>
+                      <div class="reset-stats-row">
+                        <span class="reset-count">
+                          <ha-icon icon="mdi:chart-line-variant"></ha-icon>
+                          ${this._playCountText(draft.id)}
+                        </span>
+                        <mwc-button
+                          outlined
+                          class="reset-button"
+                          @click=${this._resetStoryStats}
+                        >
+                          <ha-icon slot="icon" icon="mdi:restart"></ha-icon>
                           ${this._l("reset_stats")}
                         </mwc-button>
                       </div>
@@ -1086,6 +1257,32 @@ export class BedtimeStoriesCardEditor extends LitElement {
     }
     .story-row.editing {
       background: var(--secondary-background-color);
+    }
+    /* --- drag & drop --- */
+    .drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: grab;
+      color: var(--secondary-text-color);
+      border-radius: 6px;
+      touch-action: none;
+    }
+    .drag-handle:hover {
+      color: var(--primary-text-color);
+      background: var(--divider-color);
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .drag-handle ha-icon {
+      --mdc-icon-size: 20px;
+    }
+    .category-card.drag-over,
+    .story-row.drag-over {
+      outline: 2px dashed var(--primary-color);
+      outline-offset: -2px;
     }
     .story-thumb {
       width: 56px;
@@ -1239,6 +1436,29 @@ export class BedtimeStoriesCardEditor extends LitElement {
       margin-top: 8px;
       font-size: 0.78rem;
       color: var(--secondary-text-color);
+    }
+    .reset-stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--divider-color);
+    }
+    .reset-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--secondary-text-color);
+    }
+    .reset-count ha-icon {
+      --mdc-icon-size: 18px;
+    }
+    .reset-button {
+      flex-shrink: 0;
+      --mdc-theme-primary: var(--error-color);
     }
     .form-actions {
       display: flex;

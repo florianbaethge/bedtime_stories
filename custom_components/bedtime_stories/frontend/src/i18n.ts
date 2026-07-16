@@ -90,6 +90,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     not_configured:
       "Bedtime Stories integration is not set up yet. Add it under Settings → Devices & services.",
     reset_stats: "Reset statistics",
+    confirm_reset_stats: "Reset play statistics for this story?",
+    drag_reorder: "Drag to reorder",
   },
   de: {
     empty: "Noch keine Geschichten – füge welche im Karten-Editor hinzu.",
@@ -179,6 +181,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     not_configured:
       "Die Bedtime-Stories-Integration ist noch nicht eingerichtet. Füge sie unter Einstellungen → Geräte & Dienste hinzu.",
     reset_stats: "Statistik zurücksetzen",
+    confirm_reset_stats: "Hörstatistik dieser Geschichte zurücksetzen?",
+    drag_reorder: "Zum Sortieren ziehen",
   },
 };
 

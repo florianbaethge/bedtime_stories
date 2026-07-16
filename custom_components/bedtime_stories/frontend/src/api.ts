@@ -83,6 +83,15 @@ export const reorderCategories = (
     withEntry({ type: `${D}/category/reorder`, category_ids: categoryIds }, entryId)
   );
 
+export const reorderStories = (
+  hass: HomeAssistant,
+  storyIds: string[],
+  entryId?: string
+): Promise<unknown> =>
+  hass.callWS(
+    withEntry({ type: `${D}/story/reorder`, story_ids: storyIds }, entryId)
+  );
+
 export const saveStory = (
   hass: HomeAssistant,
   story: Record<string, unknown>,

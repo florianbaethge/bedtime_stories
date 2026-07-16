@@ -85,6 +85,53 @@ async def test_reorder_categories(hass: HomeAssistant, mock_entry: MockConfigEnt
     assert [c["id"] for c in snapshot["categories"]] == [second.id, first.id]
 
 
+async def test_reorder_stories(hass: HomeAssistant, mock_entry: MockConfigEntry):
+    manager = await _setup(hass, mock_entry)
+    category = await manager.async_save_category({"name": "A"})
+    first = await manager.async_save_story(
+        {"category_id": category.id, "title": "One", "media_content_id": "ms://a"}
+    )
+    second = await manager.async_save_story(
+        {"category_id": category.id, "title": "Two", "media_content_id": "ms://b"}
+    )
+    await manager.async_reorder_stories([second.id, first.id])
+    stories = [
+        s for s in manager.snapshot()["stories"] if s["category_id"] == category.id
+    ]
+    assert [s["id"] for s in stories] == [second.id, first.id]
+
+
+async def test_update_preserves_manual_order(
+    hass: HomeAssistant, mock_entry: MockConfigEntry
+):
+    """Editing an item without an explicit order keeps its position."""
+    manager = await _setup(hass, mock_entry)
+    category = await manager.async_save_category({"name": "A"})
+    first = await manager.async_save_story(
+        {"category_id": category.id, "title": "One", "media_content_id": "ms://a"}
+    )
+    second = await manager.async_save_story(
+        {"category_id": category.id, "title": "Two", "media_content_id": "ms://b"}
+    )
+    await manager.async_reorder_stories([second.id, first.id])  # second=0, first=1
+
+    await manager.async_save_story(
+        {
+            "id": second.id,
+            "category_id": category.id,
+            "title": "Two!",
+            "media_content_id": "ms://b",
+        }
+    )
+    assert manager.data.stories[second.id].order == 0
+    assert manager.data.stories[second.id].title == "Two!"
+
+    other = await manager.async_save_category({"name": "B"})
+    await manager.async_reorder_categories([other.id, category.id])  # category=1
+    await manager.async_save_category({"id": category.id, "name": "A!"})
+    assert manager.data.categories[category.id].order == 1
+
+
 async def test_play_updates_stats_and_fires_event(
     hass: HomeAssistant, mock_entry: MockConfigEntry
 ):
