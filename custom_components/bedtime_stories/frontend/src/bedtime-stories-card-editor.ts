@@ -99,6 +99,11 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private _subscribedEntry?: string;
 
+  /** Debounced auto-save for content edits (see _autoSaveContent). */
+  private _contentTimer?: ReturnType<typeof setTimeout>;
+
+  private _savingContent = false;
+
   public setConfig(config: BedtimeStoriesCardConfig): void {
     this._config = { ...config };
     this._connectLibrary();
@@ -117,6 +122,12 @@ export class BedtimeStoriesCardEditor extends LitElement {
     this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
     this._unsubscribe = undefined;
     this._subscribedEntry = undefined;
+    // Persist a still-pending edit if the dialog is closed mid-debounce.
+    if (this._contentTimer) {
+      clearTimeout(this._contentTimer);
+      this._contentTimer = undefined;
+      void this._autoSaveContent();
+    }
   }
 
   protected updated(): void {
@@ -362,6 +373,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
   }
 
   private _startCategory(category?: Category): void {
+    this._clearContentTimer();
     this._storyDraft = null;
     this._categoryDraft = category
       ? { id: category.id, name: category.name, icon: category.icon }
@@ -369,6 +381,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
   }
 
   private _startStory(categoryId: string, story?: Story): void {
+    this._clearContentTimer();
     this._categoryDraft = null;
     this._storyAdvanced = false;
     this._storyDraft = story
@@ -400,6 +413,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private async _saveCategory(): Promise<void> {
     if (!this.hass || !this._categoryDraft) return;
+    this._clearContentTimer();
     try {
       await saveCategory(this.hass, { ...this._categoryDraft }, this._entryId);
       this._categoryDraft = null;
@@ -411,6 +425,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
   private async _deleteCategory(category: Category): Promise<void> {
     if (!this.hass) return;
     if (!window.confirm(this._l("confirm_delete_category"))) return;
+    this._clearContentTimer();
     try {
       await deleteCategory(this.hass, category.id, this._entryId);
     } catch (err) {
@@ -420,6 +435,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private async _saveStory(): Promise<void> {
     if (!this.hass || !this._storyDraft) return;
+    this._clearContentTimer();
     const { media: _media, cover_media: _coverMedia, ...story } =
       this._storyDraft;
     try {
@@ -433,6 +449,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
   private async _deleteStory(story: Story): Promise<void> {
     if (!this.hass) return;
     if (!window.confirm(this._l("confirm_delete_story"))) return;
+    this._clearContentTimer();
     try {
       await deleteStory(this.hass, story.id, this._entryId);
     } catch (err) {
@@ -445,12 +462,70 @@ export class BedtimeStoriesCardEditor extends LitElement {
     await resetStats(this.hass, this._storyDraft.id, this._entryId);
   }
 
+  private _clearContentTimer(): void {
+    if (this._contentTimer) {
+      clearTimeout(this._contentTimer);
+      this._contentTimer = undefined;
+    }
+  }
+
+  private _scheduleContentSave(): void {
+    this._clearContentTimer();
+    this._contentTimer = setTimeout(() => void this._autoSaveContent(), 700);
+  }
+
+  /**
+   * Content (categories & stories) lives in the shared library, saved over the
+   * websocket API — it is not part of the card's Lovelace config, so those
+   * edits never enable Home Assistant's card-editor "Save" button. To avoid a
+   * dead-end where a change looks unsaveable, edits to an existing item persist
+   * automatically here (debounced). New items still use their explicit Save
+   * button, since they aren't valid until they have the required fields.
+   */
+  private async _autoSaveContent(): Promise<void> {
+    this._contentTimer = undefined;
+    if (!this.hass) return;
+    if (this._savingContent) {
+      this._scheduleContentSave();
+      return;
+    }
+    const story = this._storyDraft;
+    const category = this._categoryDraft;
+    this._savingContent = true;
+    try {
+      if (story?.id && story.title.trim() && story.media_content_id.trim()) {
+        const { media: _media, cover_media: _coverMedia, ...payload } = story;
+        await saveStory(this.hass, { ...payload }, this._entryId);
+      } else if (category?.id && category.name.trim()) {
+        await saveCategory(this.hass, { ...category }, this._entryId);
+      }
+    } catch (err) {
+      this._error = (err as { message?: string })?.message;
+    } finally {
+      this._savingContent = false;
+    }
+  }
+
+  /** Close an auto-saving draft, flushing any edit still inside the debounce. */
+  private async _doneStory(): Promise<void> {
+    this._clearContentTimer();
+    await this._autoSaveContent();
+    this._storyDraft = null;
+  }
+
+  private async _doneCategory(): Promise<void> {
+    this._clearContentTimer();
+    await this._autoSaveContent();
+    this._categoryDraft = null;
+  }
+
   private _categoryFormChanged(ev: CustomEvent): void {
     ev.stopPropagation();
     this._categoryDraft = {
       ...this._categoryDraft!,
       ...(ev.detail.value as CategoryDraft),
     };
+    if (this._categoryDraft.id) this._scheduleContentSave();
   }
 
   private _storyFormChanged(ev: CustomEvent): void {
@@ -481,6 +556,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
       draft.image = coverMedia.media_content_id || null;
     }
     this._storyDraft = draft;
+    if (draft.id) this._scheduleContentSave();
   }
 
   private _mediaDisplayName(draft: StoryDraft): string | undefined {
@@ -700,16 +776,22 @@ export class BedtimeStoriesCardEditor extends LitElement {
           @value-changed=${this._categoryFormChanged}
         ></ha-form>
         <div class="form-actions">
-          <mwc-button @click=${() => (this._categoryDraft = null)}>
-            ${this._l("cancel")}
-          </mwc-button>
-          <mwc-button
-            raised
-            .disabled=${!draft.name.trim()}
-            @click=${this._saveCategory}
-          >
-            ${this._l("save")}
-          </mwc-button>
+          ${draft.id
+            ? html`<mwc-button raised @click=${this._doneCategory}>
+                ${this._l("done")}
+              </mwc-button>`
+            : html`
+                <mwc-button @click=${() => (this._categoryDraft = null)}>
+                  ${this._l("cancel")}
+                </mwc-button>
+                <mwc-button
+                  raised
+                  .disabled=${!draft.name.trim()}
+                  @click=${this._saveCategory}
+                >
+                  ${this._l("save")}
+                </mwc-button>
+              `}
         </div>
       </div>
     `;
@@ -880,16 +962,23 @@ export class BedtimeStoriesCardEditor extends LitElement {
           : nothing}
 
         <div class="form-actions">
-          <mwc-button @click=${() => (this._storyDraft = null)}>
-            ${this._l("cancel")}
-          </mwc-button>
-          <mwc-button
-            raised
-            .disabled=${!draft.title.trim() || !draft.media_content_id.trim()}
-            @click=${this._saveStory}
-          >
-            ${this._l("save")}
-          </mwc-button>
+          ${draft.id
+            ? html`<mwc-button raised @click=${this._doneStory}>
+                ${this._l("done")}
+              </mwc-button>`
+            : html`
+                <mwc-button @click=${() => (this._storyDraft = null)}>
+                  ${this._l("cancel")}
+                </mwc-button>
+                <mwc-button
+                  raised
+                  .disabled=${!draft.title.trim() ||
+                  !draft.media_content_id.trim()}
+                  @click=${this._saveStory}
+                >
+                  ${this._l("save")}
+                </mwc-button>
+              `}
         </div>
       </div>
     `;

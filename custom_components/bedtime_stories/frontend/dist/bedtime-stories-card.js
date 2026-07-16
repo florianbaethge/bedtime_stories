@@ -131,7 +131,7 @@ const TRANSLATIONS = {
         section_appearance: "Appearance",
         section_sorting: "Sorting & statistics",
         section_playback: "Playback",
-        content_hint: "Categories group your stories and show up as sub-headers in the card. Changes are saved to the library immediately and are shared by all Bedtime Stories cards.",
+        content_hint: "Categories group your stories and show up as sub-headers in the card. Edits to existing categories and stories save automatically and are shared by all Bedtime Stories cards — the card's own Save button below only applies to the display options.",
         new_category: "New category",
         edit_category: "Edit category",
         new_story: "New story",
@@ -178,6 +178,7 @@ const TRANSLATIONS = {
         delete: "Delete",
         save: "Save",
         cancel: "Cancel",
+        done: "Done",
         name: "Name",
         icon: "Icon",
         category: "Category",
@@ -210,7 +211,7 @@ const TRANSLATIONS = {
         section_appearance: "Darstellung",
         section_sorting: "Sortierung & Statistik",
         section_playback: "Wiedergabe",
-        content_hint: "Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen werden sofort in der Bibliothek gespeichert und gelten für alle Bedtime-Stories-Karten.",
+        content_hint: "Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen an bestehenden Kategorien und Geschichten werden automatisch gespeichert und gelten für alle Bedtime-Stories-Karten — die Save-Schaltfläche der Karte selbst betrifft nur die Darstellungsoptionen.",
         new_category: "Neue Kategorie",
         edit_category: "Kategorie bearbeiten",
         new_story: "Neue Geschichte",
@@ -257,6 +258,7 @@ const TRANSLATIONS = {
         delete: "Löschen",
         save: "Speichern",
         cancel: "Abbrechen",
+        done: "Fertig",
         name: "Name",
         icon: "Icon",
         category: "Kategorie",
@@ -393,6 +395,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         this._categoryDraft = null;
         this._storyDraft = null;
         this._storyAdvanced = false;
+        this._savingContent = false;
         this._computeLabel = (schema) => schema.name === "entry_id" ? this._l("entry") : this._l(schema.name);
         this._computeHelper = (schema) => {
             if (schema.name === "columns")
@@ -418,6 +421,12 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
         this._unsubscribe = undefined;
         this._subscribedEntry = undefined;
+        // Persist a still-pending edit if the dialog is closed mid-debounce.
+        if (this._contentTimer) {
+            clearTimeout(this._contentTimer);
+            this._contentTimer = undefined;
+            void this._autoSaveContent();
+        }
     }
     updated() {
         if (this.hass && !this._unsubscribe) {
@@ -640,12 +649,14 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         return this._config?.entry_id || undefined;
     }
     _startCategory(category) {
+        this._clearContentTimer();
         this._storyDraft = null;
         this._categoryDraft = category
             ? { id: category.id, name: category.name, icon: category.icon }
             : { name: "", icon: "mdi:teddy-bear" };
     }
     _startStory(categoryId, story) {
+        this._clearContentTimer();
         this._categoryDraft = null;
         this._storyAdvanced = false;
         this._storyDraft = story
@@ -677,6 +688,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     async _saveCategory() {
         if (!this.hass || !this._categoryDraft)
             return;
+        this._clearContentTimer();
         try {
             await saveCategory(this.hass, { ...this._categoryDraft }, this._entryId);
             this._categoryDraft = null;
@@ -690,6 +702,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             return;
         if (!window.confirm(this._l("confirm_delete_category")))
             return;
+        this._clearContentTimer();
         try {
             await deleteCategory(this.hass, category.id, this._entryId);
         }
@@ -700,6 +713,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     async _saveStory() {
         if (!this.hass || !this._storyDraft)
             return;
+        this._clearContentTimer();
         const { media: _media, cover_media: _coverMedia, ...story } = this._storyDraft;
         try {
             await saveStory(this.hass, { ...story }, this._entryId);
@@ -714,6 +728,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             return;
         if (!window.confirm(this._l("confirm_delete_story")))
             return;
+        this._clearContentTimer();
         try {
             await deleteStory(this.hass, story.id, this._entryId);
         }
@@ -726,12 +741,70 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             return;
         await resetStats(this.hass, this._storyDraft.id, this._entryId);
     }
+    _clearContentTimer() {
+        if (this._contentTimer) {
+            clearTimeout(this._contentTimer);
+            this._contentTimer = undefined;
+        }
+    }
+    _scheduleContentSave() {
+        this._clearContentTimer();
+        this._contentTimer = setTimeout(() => void this._autoSaveContent(), 700);
+    }
+    /**
+     * Content (categories & stories) lives in the shared library, saved over the
+     * websocket API — it is not part of the card's Lovelace config, so those
+     * edits never enable Home Assistant's card-editor "Save" button. To avoid a
+     * dead-end where a change looks unsaveable, edits to an existing item persist
+     * automatically here (debounced). New items still use their explicit Save
+     * button, since they aren't valid until they have the required fields.
+     */
+    async _autoSaveContent() {
+        this._contentTimer = undefined;
+        if (!this.hass)
+            return;
+        if (this._savingContent) {
+            this._scheduleContentSave();
+            return;
+        }
+        const story = this._storyDraft;
+        const category = this._categoryDraft;
+        this._savingContent = true;
+        try {
+            if (story?.id && story.title.trim() && story.media_content_id.trim()) {
+                const { media: _media, cover_media: _coverMedia, ...payload } = story;
+                await saveStory(this.hass, { ...payload }, this._entryId);
+            }
+            else if (category?.id && category.name.trim()) {
+                await saveCategory(this.hass, { ...category }, this._entryId);
+            }
+        }
+        catch (err) {
+            this._error = err?.message;
+        }
+        finally {
+            this._savingContent = false;
+        }
+    }
+    /** Close an auto-saving draft, flushing any edit still inside the debounce. */
+    async _doneStory() {
+        this._clearContentTimer();
+        await this._autoSaveContent();
+        this._storyDraft = null;
+    }
+    async _doneCategory() {
+        this._clearContentTimer();
+        await this._autoSaveContent();
+        this._categoryDraft = null;
+    }
     _categoryFormChanged(ev) {
         ev.stopPropagation();
         this._categoryDraft = {
             ...this._categoryDraft,
             ...ev.detail.value,
         };
+        if (this._categoryDraft.id)
+            this._scheduleContentSave();
     }
     _storyFormChanged(ev) {
         ev.stopPropagation();
@@ -757,6 +830,8 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             draft.image = coverMedia.media_content_id || null;
         }
         this._storyDraft = draft;
+        if (draft.id)
+            this._scheduleContentSave();
     }
     _mediaDisplayName(draft) {
         if (draft.media?.metadata?.title)
@@ -966,16 +1041,22 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
           @value-changed=${this._categoryFormChanged}
         ></ha-form>
         <div class="form-actions">
-          <mwc-button @click=${() => (this._categoryDraft = null)}>
-            ${this._l("cancel")}
-          </mwc-button>
-          <mwc-button
-            raised
-            .disabled=${!draft.name.trim()}
-            @click=${this._saveCategory}
-          >
-            ${this._l("save")}
-          </mwc-button>
+          ${draft.id
+            ? b `<mwc-button raised @click=${this._doneCategory}>
+                ${this._l("done")}
+              </mwc-button>`
+            : b `
+                <mwc-button @click=${() => (this._categoryDraft = null)}>
+                  ${this._l("cancel")}
+                </mwc-button>
+                <mwc-button
+                  raised
+                  .disabled=${!draft.name.trim()}
+                  @click=${this._saveCategory}
+                >
+                  ${this._l("save")}
+                </mwc-button>
+              `}
         </div>
       </div>
     `;
@@ -1145,16 +1226,23 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             : A}
 
         <div class="form-actions">
-          <mwc-button @click=${() => (this._storyDraft = null)}>
-            ${this._l("cancel")}
-          </mwc-button>
-          <mwc-button
-            raised
-            .disabled=${!draft.title.trim() || !draft.media_content_id.trim()}
-            @click=${this._saveStory}
-          >
-            ${this._l("save")}
-          </mwc-button>
+          ${draft.id
+            ? b `<mwc-button raised @click=${this._doneStory}>
+                ${this._l("done")}
+              </mwc-button>`
+            : b `
+                <mwc-button @click=${() => (this._storyDraft = null)}>
+                  ${this._l("cancel")}
+                </mwc-button>
+                <mwc-button
+                  raised
+                  .disabled=${!draft.title.trim() ||
+                !draft.media_content_id.trim()}
+                  @click=${this._saveStory}
+                >
+                  ${this._l("save")}
+                </mwc-button>
+              `}
         </div>
       </div>
     `;
@@ -2266,7 +2354,7 @@ window.customCards.push({
     documentationURL: "https://github.com/florianbaethge/bedtime_stories",
 });
 // eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.3"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
+console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.4"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
 
 export { BedtimeStoriesCard };
 //# sourceMappingURL=bedtime-stories-card.js.map
