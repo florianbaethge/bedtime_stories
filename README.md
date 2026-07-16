@@ -1,4 +1,14 @@
-# Bedtime Stories 🧸🌙
+[![CI](https://github.com/florianbaethge/bedtime_stories/actions/workflows/ci.yml/badge.svg)](https://github.com/florianbaethge/bedtime_stories/actions/workflows/ci.yml)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/florianbaethge/bedtime_stories/main/screenshots/bedtime-stories-logo.png"
+    alt="Bedtime Stories"
+    width="760"
+  >
+</p>
 
 A kid-friendly story library for Home Assistant: a custom integration plus a
 Lovelace card (`bedtime-stories-card`) that shows big, tappable cover tiles
