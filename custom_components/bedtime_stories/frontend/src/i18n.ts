@@ -19,7 +19,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     section_sorting: "Sorting & statistics",
     section_playback: "Playback",
     content_hint:
-      "Categories group your stories and show up as sub-headers in the card. Changes are saved to the library immediately and are shared by all Bedtime Stories cards.",
+      "Categories group your stories and show up as sub-headers in the card. Edits to existing categories and stories save automatically and are shared by all Bedtime Stories cards — the card's own Save button below only applies to the display options.",
     new_category: "New category",
     edit_category: "Edit category",
     new_story: "New story",
@@ -71,6 +71,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     delete: "Delete",
     save: "Save",
     cancel: "Cancel",
+    done: "Done",
     name: "Name",
     icon: "Icon",
     category: "Category",
@@ -107,7 +108,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     section_sorting: "Sortierung & Statistik",
     section_playback: "Wiedergabe",
     content_hint:
-      "Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen werden sofort in der Bibliothek gespeichert und gelten für alle Bedtime-Stories-Karten.",
+      "Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen an bestehenden Kategorien und Geschichten werden automatisch gespeichert und gelten für alle Bedtime-Stories-Karten — die Save-Schaltfläche der Karte selbst betrifft nur die Darstellungsoptionen.",
     new_category: "Neue Kategorie",
     edit_category: "Kategorie bearbeiten",
     new_story: "Neue Geschichte",
@@ -159,6 +160,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     delete: "Löschen",
     save: "Speichern",
     cancel: "Abbrechen",
+    done: "Fertig",
     name: "Name",
     icon: "Icon",
     category: "Kategorie",
