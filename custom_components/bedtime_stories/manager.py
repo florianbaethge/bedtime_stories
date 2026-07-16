@@ -145,6 +145,8 @@ class BedtimeStoriesManager:
         if not data.get("id"):
             data["id"] = new_id()
             data.setdefault("order", len(self.data.categories))
+        elif "order" not in data and (existing := self.data.categories.get(data["id"])):
+            data["order"] = existing.order
         category = Category.from_dict(data)
         self.data.categories[category.id] = category
         await self.async_save_and_notify()
@@ -185,6 +187,8 @@ class BedtimeStoriesManager:
         if not data.get("id"):
             data["id"] = new_id()
             data.setdefault("order", len(self.data.stories))
+        elif "order" not in data and (existing := self.data.stories.get(data["id"])):
+            data["order"] = existing.order
         story = Story.from_dict(data)
         self.data.stories[story.id] = story
         await self.async_save_and_notify()
@@ -196,6 +200,13 @@ class BedtimeStoriesManager:
             raise HomeAssistantError(f"Unknown story: {story_id}")
         self.data.stories.pop(story_id)
         self.data.stats.pop(story_id, None)
+        await self.async_save_and_notify()
+
+    async def async_reorder_stories(self, story_ids: list[str]) -> None:
+        """Apply a new order to the given stories (used per category)."""
+        for index, story_id in enumerate(story_ids):
+            if story := self.data.stories.get(story_id):
+                story.order = index
         await self.async_save_and_notify()
 
     async def async_reset_stats(self, story_id: str | None = None) -> None:

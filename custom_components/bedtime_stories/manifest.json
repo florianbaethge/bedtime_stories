@@ -17,5 +17,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/florianbaethge/bedtime_stories/issues",
   "requirements": [],
-  "version": "0.1.4"
+  "version": "0.1.5"
 }

@@ -35,6 +35,7 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_category_reorder)
     websocket_api.async_register_command(hass, ws_story_save)
     websocket_api.async_register_command(hass, ws_story_delete)
+    websocket_api.async_register_command(hass, ws_story_reorder)
     websocket_api.async_register_command(hass, ws_stats_reset)
 
 
@@ -254,6 +255,27 @@ async def ws_story_delete(
     except HomeAssistantError as err:
         connection.send_error(msg["id"], ERR_NOT_FOUND, str(err))
         return
+    connection.send_result(msg["id"], {"success": True})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/story/reorder",
+        vol.Optional("entry_id"): str,
+        vol.Required("story_ids"): [str],
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_story_reorder(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Apply a new story order (within a category)."""
+    if (manager := _resolve_or_error(hass, connection, msg)) is None:
+        return
+    await manager.async_reorder_stories(msg["story_ids"])
     connection.send_result(msg["id"], {"success": True})
 
 
