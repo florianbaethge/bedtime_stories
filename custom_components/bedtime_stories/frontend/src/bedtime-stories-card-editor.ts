@@ -338,6 +338,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
     } else {
       schema.push({ name: "show_player", selector: { boolean: {} } });
     }
+    schema.push({ name: "show_device_toggle", selector: { boolean: {} } });
     return schema;
   }
 
@@ -346,6 +347,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
 
   private _computeHelper = (schema: { name: string }): string | undefined => {
     if (schema.name === "columns") return this._l("columns_help");
+    if (schema.name === "show_device_toggle") {
+      return this._l("show_device_toggle_help");
+    }
     return undefined;
   };
 

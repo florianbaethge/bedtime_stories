@@ -247,28 +247,45 @@ class BedtimeStoriesManager:
         return {"metadata": metadata}
 
     async def async_play(
-        self, story_id: str, media_player: str | None = None
+        self,
+        story_id: str,
+        media_player: str | None = None,
+        *,
+        record_only: bool = False,
+        source: str | None = None,
     ) -> dict[str, Any]:
-        """Play a story, update stats and fire the logbook event."""
+        """Play a story, or just record a local ("this device") playback.
+
+        With ``record_only`` the media player cast is skipped — the card has
+        already started audio in the browser — and only stats + the logbook
+        event are recorded, using ``source`` as the human-readable location.
+        """
         story = self.data.stories.get(story_id)
         if story is None:
             raise HomeAssistantError(f"Unknown story: {story_id}")
-        player = self._resolve_player(media_player)
 
-        await self.hass.services.async_call(
-            MEDIA_PLAYER_DOMAIN,
-            SERVICE_PLAY_MEDIA,
-            {
-                ATTR_ENTITY_ID: [player],
-                ATTR_MEDIA_CONTENT_ID: story.media_content_id,
-                ATTR_MEDIA_CONTENT_TYPE: story.media_content_type,
-                ATTR_MEDIA_EXTRA: self._media_extra(story),
-            },
-            blocking=True,
-        )
+        if record_only:
+            played_on = source
+        else:
+            played_on = self._resolve_player(media_player)
+            await self.hass.services.async_call(
+                MEDIA_PLAYER_DOMAIN,
+                SERVICE_PLAY_MEDIA,
+                {
+                    ATTR_ENTITY_ID: [played_on],
+                    ATTR_MEDIA_CONTENT_ID: story.media_content_id,
+                    ATTR_MEDIA_CONTENT_TYPE: story.media_content_type,
+                    ATTR_MEDIA_EXTRA: self._media_extra(story),
+                },
+                blocking=True,
+            )
 
+        return await self._record_play(story, played_on)
+
+    async def _record_play(self, story: Story, played_on: str | None) -> dict[str, Any]:
+        """Bump stats, persist, and fire the logbook event for one playback."""
         played_at = dt_util.now().isoformat()
-        stats = self.data.stats.setdefault(story_id, PlayStats())
+        stats = self.data.stats.setdefault(story.id, PlayStats())
         stats.play_count += 1
         stats.last_played = played_at
         await self.async_save_and_notify()
@@ -278,11 +295,11 @@ class BedtimeStoriesManager:
             ATTR_STORY_ID: story.id,
             ATTR_TITLE: story.title,
             ATTR_CATEGORY: category.name if category else None,
-            ATTR_MEDIA_PLAYER: player,
+            ATTR_MEDIA_PLAYER: played_on,
             ATTR_PLAYED_AT: played_at,
         }
         self.hass.bus.async_fire(EVENT_STORY_PLAYED, event_data)
-        _LOGGER.debug("Played %s on %s", story.title, player)
+        _LOGGER.debug("Played %s on %s", story.title, played_on or "this device")
         return event_data
 
 

@@ -41,6 +41,11 @@ target on top.
   Toggle it from the card header chip, any dashboard, or an automation —
   e.g. Google Home Mini at home, your phone's companion-app player on the go.
   Alternatively, pin the card to one fixed `media_player`.
+- **Play on _this device_**: a header toggle plays the story directly in the
+  current browser tab or companion app (HTML5 audio — no media player or
+  browser_mod needed), so you can listen on the phone in your hand. Plays are
+  still counted. The choice is stored per browser; hide the toggle with
+  `show_device_toggle: false`.
 - **Playing indicator**: the tile currently playing on the target player gets
   an animated equalizer and a highlight ring
 - **History**: every playback fires a `bedtime_stories_story_played` event and
@@ -112,6 +117,7 @@ them into the cover's *Advanced* URL field.
 | `sort_direction` | `asc` | `asc` or `desc` |
 | `show_sort_selector` | `false` | Sort chips inside the card |
 | `show_player` | `true` | Player chip in the header (tap to switch player) |
+| `show_device_toggle` | `true` | Header toggle to play in this browser / app |
 | `player_mode` | `select` | `select` (use the select entity) or `fixed` |
 | `media_player` | – | Target when `player_mode: fixed` |
 | `categories` | all | List of category IDs to show |

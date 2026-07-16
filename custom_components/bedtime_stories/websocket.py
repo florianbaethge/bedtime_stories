@@ -118,6 +118,9 @@ def ws_subscribe(
         vol.Optional("entry_id"): str,
         vol.Required("story_id"): str,
         vol.Optional("media_player"): str,
+        # "this device" playback: the card plays audio itself, so only record.
+        vol.Optional("record_only"): bool,
+        vol.Optional("source"): str,
     }
 )
 @websocket_api.async_response
@@ -126,11 +129,16 @@ async def ws_play(
     connection: websocket_api.ActiveConnection,
     msg: dict[str, Any],
 ) -> None:
-    """Play a story (card tap)."""
+    """Play a story (card tap) or record a local playback."""
     if (manager := _resolve_or_error(hass, connection, msg)) is None:
         return
     try:
-        result = await manager.async_play(msg["story_id"], msg.get("media_player"))
+        result = await manager.async_play(
+            msg["story_id"],
+            msg.get("media_player"),
+            record_only=msg.get("record_only", False),
+            source=msg.get("source"),
+        )
     except HomeAssistantError as err:
         connection.send_error(msg["id"], ERR_INVALID, str(err))
         return

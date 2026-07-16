@@ -50,7 +50,8 @@ def async_describe_events(
             LOGBOOK_ENTRY_MESSAGE: message,
             LOGBOOK_ENTRY_ICON: "mdi:book-open-page-variant",
         }
-        if player:
+        # Only link a real entity; local playback carries a plain device label.
+        if player_state is not None:
             entry[LOGBOOK_ENTRY_ENTITY_ID] = player
         return entry
 
