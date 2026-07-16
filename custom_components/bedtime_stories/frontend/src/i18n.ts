@@ -30,11 +30,17 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     media_selected: "Selected media",
     media_none: "No media file selected yet",
     media_help:
-      "Browse Home Assistant media — files can be uploaded to “My media” right in the browse dialog.",
+      "Browse your Home Assistant media, or upload a new audio file straight to “My media” with the button below.",
     cover_selected: "Selected image",
     cover_none: "No cover image selected yet",
     cover_help:
-      "Pick a cover from Home Assistant media — browse existing images or upload one, just like the audio file.",
+      "Browse your Home Assistant media, or upload a picture straight to “My media” with the button below.",
+    or: "or",
+    upload_file: "Upload",
+    uploading: "Uploading…",
+    upload_failed: "Upload failed",
+    upload_no_media_source:
+      "No writable media folder found. Upload via Settings → Media, or use a share.",
     image_url: "Cover image URL / content id",
     image_url_help:
       "Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",
@@ -126,11 +132,17 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     media_selected: "Ausgewählte Medien",
     media_none: "Noch keine Mediendatei ausgewählt",
     media_help:
-      "Durchsuche die Home-Assistant-Medien — Dateien kannst du direkt im Dialog unter „Meine Medien“ hochladen.",
+      "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten eine neue Audiodatei direkt in „Meine Medien“ hoch.",
     cover_selected: "Ausgewähltes Bild",
     cover_none: "Noch kein Cover-Bild ausgewählt",
     cover_help:
-      "Wähle ein Cover aus den Home-Assistant-Medien — bestehende Bilder durchsuchen oder hochladen, genau wie die Audiodatei.",
+      "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild direkt in „Meine Medien“ hoch.",
+    or: "oder",
+    upload_file: "Hochladen",
+    uploading: "Wird hochgeladen…",
+    upload_failed: "Upload fehlgeschlagen",
+    upload_no_media_source:
+      "Kein beschreibbarer Medienordner gefunden. Lade über Einstellungen → Medien hoch oder nutze eine Freigabe.",
     image_url: "Cover-Bild-URL / Content-ID",
     image_url_help:
       "Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",

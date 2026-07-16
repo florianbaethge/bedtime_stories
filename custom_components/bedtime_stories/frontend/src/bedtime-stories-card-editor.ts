@@ -32,6 +32,12 @@ interface MediaSelectorValue {
   metadata?: { title?: string; thumbnail?: string };
 }
 
+interface MediaSourceItem {
+  media_content_id?: string;
+  can_expand?: boolean;
+  children?: MediaSourceItem[];
+}
+
 interface StoryDraft {
   id?: string;
   category_id: string;
@@ -96,6 +102,12 @@ export class BedtimeStoriesCardEditor extends LitElement {
   @state() private _storyAdvanced = false;
 
   @state() private _error?: string;
+
+  /** Which field is currently uploading a file ("media" or "cover"). */
+  @state() private _uploading?: "media" | "cover";
+
+  /** Discovered "My media" folder id to upload into (cached). */
+  private _uploadFolder?: string;
 
   private _unsubscribe?: Promise<() => Promise<void>>;
 
@@ -722,7 +734,207 @@ export class BedtimeStoriesCardEditor extends LitElement {
     return segment || draft.image;
   }
 
+  // ---- direct upload to "My media" -----------------------------------------
+
+  private static readonly _LOCAL_PREFIX = "media-source://media_source/local";
+
+  /** Find a writable local media_source folder to upload into (cached). */
+  private async _localMediaFolder(): Promise<string | null> {
+    if (this._uploadFolder) return this._uploadFolder;
+    const prefix = BedtimeStoriesCardEditor._LOCAL_PREFIX;
+    const folders = this._foldersFromExistingMedia();
+    for (const folder of await this._browseLocalFolders()) {
+      if (!folders.includes(folder)) folders.push(folder);
+    }
+    // Prefer the default "My media" (/media) folder so uploads land where the
+    // user expects, not in whatever folder a stray existing story happens to
+    // use (e.g. a mounted /cdrom in a sandbox).
+    const target =
+      folders.find((f) => f === `${prefix}/media`) ??
+      folders.find((f) => f.endsWith("/media")) ??
+      folders[0] ??
+      null;
+    if (target) this._uploadFolder = target;
+    return target;
+  }
+
+  /**
+   * Reuse the folders existing stories' media/cover already live in. These are
+   * real local folders in this instance's exact id format, so no assumptions
+   * about the media_source layout are needed.
+   */
+  private _foldersFromExistingMedia(): string[] {
+    const prefix = BedtimeStoriesCardEditor._LOCAL_PREFIX;
+    const folders: string[] = [];
+    for (const story of this._library?.stories ?? []) {
+      for (const id of [story.media_content_id, story.image]) {
+        if (!id || !id.startsWith(prefix)) continue;
+        const clean = id.split("?")[0];
+        const slash = clean.lastIndexOf("/");
+        // Require a path segment after the prefix (a concrete directory).
+        if (slash <= prefix.length) continue;
+        const folder = clean.slice(0, slash);
+        if (!folders.includes(folder)) folders.push(folder);
+      }
+    }
+    return folders;
+  }
+
+  /** Best-effort: list the local media source's directories by browsing. */
+  private async _browseLocalFolders(): Promise<string[]> {
+    if (!this.hass) return [];
+    const prefix = BedtimeStoriesCardEditor._LOCAL_PREFIX;
+    const isLocal = (id?: string): id is string =>
+      !!id && id.startsWith(prefix);
+    const dirsOf = (item?: MediaSourceItem): string[] =>
+      (item?.children ?? [])
+        .filter((c) => c.can_expand && isLocal(c.media_content_id))
+        .map((c) => c.media_content_id as string);
+    const browse = async (id: string): Promise<MediaSourceItem | undefined> => {
+      try {
+        return await this.hass!.callWS<MediaSourceItem>({
+          type: "media_source/browse_media",
+          media_content_id: id,
+        });
+      } catch {
+        return undefined;
+      }
+    };
+    for (const root of [`${prefix}/.`, prefix, "", "media-source://"]) {
+      const item = await browse(root);
+      if (!item) continue;
+      const direct = dirsOf(item);
+      if (direct.length) return direct;
+      const local = (item.children ?? []).find((c) =>
+        isLocal(c.media_content_id)
+      );
+      if (local?.media_content_id) {
+        const nested = dirsOf(await browse(local.media_content_id));
+        if (nested.length) return nested;
+      }
+    }
+    return [];
+  }
+
+  private async _uploadToLocal(file: File): Promise<string | null> {
+    const folder = await this._localMediaFolder();
+    if (!folder || !this.hass) {
+      this._error = this._l("upload_no_media_source");
+      return null;
+    }
+    const form = new FormData();
+    form.append("media_content_id", folder);
+    form.append("file", file);
+    const resp = await this.hass.fetchWithAuth(
+      "/api/media_source/local_source/upload",
+      { method: "POST", body: form }
+    );
+    if (!resp.ok) {
+      throw new Error(`${this._l("upload_failed")} (HTTP ${resp.status})`);
+    }
+    const data = (await resp.json()) as {
+      media_content_id?: string;
+      id?: string;
+    };
+    // The endpoint returns the new id; fall back to composing it from the
+    // target folder + filename (media_source ids are raw paths).
+    return data.media_content_id ?? data.id ?? `${folder}/${file.name}`;
+  }
+
+  private async _uploadMediaFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file || !this._storyDraft) return;
+    this._uploading = "media";
+    this._error = undefined;
+    try {
+      const id = await this._uploadToLocal(file);
+      if (!id) return;
+      const type = file.type || "audio/mpeg";
+      const draft: StoryDraft = {
+        ...this._storyDraft,
+        media_content_id: id,
+        media_content_type: type,
+        media: {
+          media_content_id: id,
+          media_content_type: type,
+          metadata: { title: file.name },
+        },
+      };
+      if (!draft.title.trim()) draft.title = file.name.replace(/\.[^./\\]+$/, "");
+      this._storyDraft = draft;
+      if (draft.id) this._scheduleContentSave();
+    } catch (err) {
+      this._error =
+        (err as { message?: string })?.message ?? this._l("upload_failed");
+    } finally {
+      this._uploading = undefined;
+    }
+  }
+
+  private async _uploadCoverFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file || !this._storyDraft) return;
+    this._uploading = "cover";
+    this._error = undefined;
+    try {
+      const id = await this._uploadToLocal(file);
+      if (!id) return;
+      this._storyDraft = {
+        ...this._storyDraft,
+        image: id,
+        cover_media: {
+          media_content_id: id,
+          media_content_type: file.type || "image/*",
+        },
+      };
+      if (this._storyDraft.id) this._scheduleContentSave();
+    } catch (err) {
+      this._error =
+        (err as { message?: string })?.message ?? this._l("upload_failed");
+    } finally {
+      this._uploading = undefined;
+    }
+  }
+
   // ---- rendering ----------------------------------------------------------
+
+  /** "…or upload a file" row shown under the media / cover pickers. */
+  private _renderUploadRow(
+    kind: "media" | "cover",
+    accept: string,
+    handler: (ev: Event) => void
+  ): TemplateResult {
+    return html`
+      <div class="upload-row">
+        <span class="upload-or">${this._l("or")}</span>
+        <mwc-button
+          outlined
+          dense
+          .disabled=${this._uploading !== undefined}
+          @click=${(ev: Event) =>
+            (
+              (ev.currentTarget as HTMLElement)
+                .nextElementSibling as HTMLInputElement
+            ).click()}
+        >
+          <ha-icon slot="icon" icon="mdi:tray-arrow-up"></ha-icon>
+          ${this._uploading === kind
+            ? this._l("uploading")
+            : this._l("upload_file")}
+        </mwc-button>
+        <input
+          class="file-input"
+          type="file"
+          accept=${accept}
+          @change=${handler}
+        />
+      </div>
+    `;
+  }
 
   protected render(): TemplateResult {
     if (!this.hass || !this._config) return html``;
@@ -1045,6 +1257,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
             .computeLabel=${computeLabel}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
+          ${this._renderUploadRow("media", "audio/*", this._uploadMediaFile)}
           <div class="media-status ${draft.media_content_id ? "ok" : ""}">
             <ha-icon
               icon=${draft.media_content_id
@@ -1072,6 +1285,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
             .computeLabel=${this._noLabel}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
+          ${this._renderUploadRow("cover", "image/*", this._uploadCoverFile)}
           <div class="media-status ${draft.image ? "ok" : ""}">
             <ha-icon
               icon=${draft.image
@@ -1410,6 +1624,19 @@ export class BedtimeStoriesCardEditor extends LitElement {
     }
     .media-status ha-icon {
       --mdc-icon-size: 16px;
+    }
+    .upload-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .upload-or {
+      font-size: 0.78rem;
+      color: var(--secondary-text-color);
+    }
+    .file-input {
+      display: none;
     }
     .advanced-toggle {
       display: flex;
