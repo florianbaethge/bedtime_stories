@@ -1482,7 +1482,7 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         return document.createElement("bedtime-stories-card-editor");
     }
     static getStubConfig() {
-        return { title: "Gute-Nacht-Geschichten" };
+        return { title: "Bedtime Stories" };
     }
     setConfig(config) {
         this._config = { ...DEFAULT_CONFIG, ...config };
@@ -2266,7 +2266,7 @@ window.customCards.push({
     documentationURL: "https://github.com/florianbaethge/bedtime_stories",
 });
 // eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.2"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
+console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.3"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
 
 export { BedtimeStoriesCard };
 //# sourceMappingURL=bedtime-stories-card.js.map

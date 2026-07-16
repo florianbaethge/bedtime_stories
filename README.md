@@ -23,15 +23,15 @@ target on top.
 ## Features
 
 - **Full-width dashboard card** with a graphical editor (no YAML required)
-- **Categories** shown as sub-headers with icons (e.g. "Allgemein",
-  "Astrid Lindgren", "Märchen")
+- **Categories** shown as sub-headers with icons (e.g. "General",
+  "Astrid Lindgren", "Fairy tales")
 - **Stories** with title, cover image (browse existing images or upload via
   the media picker — same dialog as the audio file), duration badge (`~20m`)
   and a media file picked from the media browser (local media upload works
   there too) or any URL
 - **Layout options**: grid with column count, or list with cozy/compact
   density, show/hide titles and duration
-- **Play statistics**: optional per-tile line ("12× gehört · vor 2 Tagen"),
+- **Play statistics**: optional per-tile line ("played 12× · 2 days ago"),
   a `sensor.<name>_last_story` and a long-term `sensor.<name>_total_plays`
 - **Sorting**: manual, alphabetical, most played or last played — ascending or
   descending — plus optional sort chips directly in the card (stored per
@@ -45,7 +45,7 @@ target on top.
   an animated equalizer and a highlight ring
 - **History**: every playback fires a `bedtime_stories_story_played` event and
   shows up in the Home Assistant logbook/activity feed ("Bedtime Stories
-  played “Leo Lausemaus” (Allgemein) on Kinderzimmer")
+  played “The Gruffalo” (Fairy tales) on Kids' room")
 - **Kid-friendly**: big touch targets, rounded tiles, press/pop animations,
   no destructive actions reachable from the card itself
 
