@@ -58,6 +58,20 @@ export const playStory = (
     )
   );
 
+/** Record a "this device" playback (audio plays in the browser, not cast). */
+export const recordPlay = (
+  hass: HomeAssistant,
+  storyId: string,
+  source: string,
+  entryId?: string
+): Promise<unknown> =>
+  hass.callWS(
+    withEntry(
+      { type: `${D}/play`, story_id: storyId, record_only: true, source },
+      entryId
+    )
+  );
+
 export const saveCategory = (
   hass: HomeAssistant,
   category: Record<string, unknown>,

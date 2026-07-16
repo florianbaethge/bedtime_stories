@@ -1,9 +1,14 @@
 import { css, html, LitElement, nothing, type TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 
-import { playStory, subscribeLibrary } from "./api";
+import {
+  playStory,
+  recordPlay,
+  resolveMediaSource,
+  subscribeLibrary,
+} from "./api";
 import { localize, relativeTime } from "./i18n";
 import { isMediaSource, resolveImage } from "./media-image";
 import {
@@ -57,6 +62,13 @@ export class BedtimeStoriesCard extends LitElement {
 
   @state() private _localSort?: SortChoice;
 
+  /** "This device" mode: play the audio in the browser instead of casting. */
+  @state() private _playHere = false;
+
+  @state() private _localPlayingId: string | null = null;
+
+  @query("audio") private _audioEl?: HTMLAudioElement;
+
   private _unsubscribe?: Promise<() => Promise<void>>;
 
   private _subscribedEntry?: string;
@@ -72,6 +84,7 @@ export class BedtimeStoriesCard extends LitElement {
   public setConfig(config: BedtimeStoriesCardConfig): void {
     this._config = { ...DEFAULT_CONFIG, ...config };
     this._localSort = this._loadLocalSort();
+    this._playHere = this._loadPlayHere();
     this._resubscribe();
   }
 
@@ -97,6 +110,7 @@ export class BedtimeStoriesCard extends LitElement {
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     this._teardown();
+    this._stopLocal();
   }
 
   protected updated(): void {
@@ -147,6 +161,43 @@ export class BedtimeStoriesCard extends LitElement {
       return undefined;
     }
   }
+
+  // ---- "this device" playback ----------------------------------------------
+
+  private _deviceStorageKey(): string {
+    return `bedtime-stories-here:${this._config?.entry_id ?? "default"}`;
+  }
+
+  private _loadPlayHere(): boolean {
+    try {
+      return window.localStorage.getItem(this._deviceStorageKey()) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  private _togglePlayHere(): void {
+    this._playHere = !this._playHere;
+    try {
+      window.localStorage.setItem(
+        this._deviceStorageKey(),
+        this._playHere ? "1" : "0"
+      );
+    } catch {
+      // private mode etc. — still works for this session
+    }
+    if (!this._playHere) this._stopLocal();
+  }
+
+  private _stopLocal(): void {
+    this._audioEl?.pause();
+    this._localPlayingId = null;
+  }
+
+  private _onAudioError = (): void => {
+    this._localPlayingId = null;
+    if (this._playHere) this._flashError(localize(this.hass, "play_failed"));
+  };
 
   private _activeSort(): SortChoice {
     if (this._config?.show_sort_selector && this._localSort) {
@@ -256,6 +307,7 @@ export class BedtimeStoriesCard extends LitElement {
   }
 
   private _playingStoryId(): string | null {
+    if (this._playHere) return this._localPlayingId;
     const player = this._targetPlayer();
     if (!player || !this.hass) return null;
     const st = this.hass.states[player];
@@ -268,8 +320,19 @@ export class BedtimeStoriesCard extends LitElement {
 
   // ---- actions ----------------------------------------------------------------
 
+  private _flashError(message: string): void {
+    this._error = message;
+    window.setTimeout(() => {
+      this._error = undefined;
+    }, 4000);
+  }
+
   private async _play(story: Story): Promise<void> {
     if (!this.hass) return;
+    if (this._playHere) {
+      await this._playLocal(story);
+      return;
+    }
     this._justPlayed = story.id;
     window.setTimeout(() => {
       if (this._justPlayed === story.id) this._justPlayed = null;
@@ -285,10 +348,56 @@ export class BedtimeStoriesCard extends LitElement {
       );
     } catch (err) {
       this._justPlayed = null;
-      this._error = (err as { message?: string })?.message ?? "play failed";
-      window.setTimeout(() => {
-        this._error = undefined;
-      }, 4000);
+      this._flashError((err as { message?: string })?.message ?? "play failed");
+    }
+  }
+
+  /** Resolve a story's media id into a URL the browser can play. */
+  private async _resolveMediaUrl(mediaId: string): Promise<string | null> {
+    if (!this.hass) return null;
+    if (!isMediaSource(mediaId)) return mediaId;
+    try {
+      const { url } = await resolveMediaSource(this.hass, mediaId);
+      return url;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Play a story's audio in this browser tab (companion app included). */
+  private async _playLocal(story: Story): Promise<void> {
+    const audio = this._audioEl;
+    if (!audio || !this.hass) return;
+    // Tapping the currently playing tile stops it.
+    if (this._localPlayingId === story.id && !audio.paused) {
+      this._stopLocal();
+      return;
+    }
+    this._justPlayed = story.id;
+    window.setTimeout(() => {
+      if (this._justPlayed === story.id) this._justPlayed = null;
+    }, 1600);
+    const url = await this._resolveMediaUrl(story.media_content_id);
+    if (!url) {
+      this._justPlayed = null;
+      this._flashError(localize(this.hass, "play_failed"));
+      return;
+    }
+    try {
+      audio.src = url;
+      await audio.play();
+      this._localPlayingId = story.id;
+      // Count the play (stats + logbook) without casting to a media player.
+      void recordPlay(
+        this.hass,
+        story.id,
+        localize(this.hass, "this_device"),
+        this._config?.entry_id
+      ).catch(() => undefined);
+    } catch {
+      // Autoplay blocked or codec unsupported — a second tap usually works.
+      this._justPlayed = null;
+      this._localPlayingId = null;
     }
   }
 
@@ -363,19 +472,35 @@ export class BedtimeStoriesCard extends LitElement {
       <ha-card class=${classMap({ compact })}>
         <div class="header">
           ${config.title ? html`<h1>${config.title}</h1>` : nothing}
-          ${showChip
-            ? html`<button
-                class="player-chip"
-                title=${this._library?.select_entity ?? ""}
-                @click=${this._cyclePlayer}
-              >
-                <ha-icon icon="mdi:cast-audio"></ha-icon>
-                <span
-                  >${this._playerName(player) ??
-                  localize(this.hass, "no_player")}</span
+          <div class="header-chips">
+            ${config.show_device_toggle !== false
+              ? html`<button
+                  class=${classMap({
+                    "player-chip": true,
+                    "device-chip": true,
+                    active: this._playHere,
+                  })}
+                  title=${localize(this.hass, "this_device")}
+                  @click=${this._togglePlayHere}
                 >
-              </button>`
-            : nothing}
+                  <ha-icon icon="mdi:cellphone-play"></ha-icon>
+                  <span>${localize(this.hass, "this_device")}</span>
+                </button>`
+              : nothing}
+            ${showChip && !this._playHere
+              ? html`<button
+                  class="player-chip"
+                  title=${this._library?.select_entity ?? ""}
+                  @click=${this._cyclePlayer}
+                >
+                  <ha-icon icon="mdi:cast-audio"></ha-icon>
+                  <span
+                    >${this._playerName(player) ??
+                    localize(this.hass, "no_player")}</span
+                  >
+                </button>`
+              : nothing}
+          </div>
         </div>
         ${config.show_sort_selector ? this._renderSortChips() : nothing}
         ${this._error
@@ -389,6 +514,10 @@ export class BedtimeStoriesCard extends LitElement {
           : categories.map((category) =>
               this._renderCategory(category, playing)
             )}
+        <audio
+          @ended=${() => (this._localPlayingId = null)}
+          @error=${this._onAudioError}
+        ></audio>
       </ha-card>
     `;
   }
@@ -573,6 +702,25 @@ export class BedtimeStoriesCard extends LitElement {
     }
     .player-chip ha-icon {
       --mdc-icon-size: 16px;
+    }
+    .header-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .device-chip.active {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+    }
+    .device-chip.active:hover {
+      background: var(--primary-color);
+    }
+    audio {
+      display: none;
     }
     .sort-chips {
       display: flex;

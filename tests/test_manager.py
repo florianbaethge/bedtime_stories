@@ -161,6 +161,25 @@ async def test_play_updates_stats_and_fires_event(
     assert events[0].data["category"] == "Allgemein"
 
 
+async def test_play_record_only_skips_cast(
+    hass: HomeAssistant, mock_entry: MockConfigEntry
+):
+    """'This device' playback records stats + event without casting."""
+    manager = await _setup(hass, mock_entry)
+    story_id = await _add_story(manager)
+    calls = async_mock_service(hass, "media_player", "play_media")
+    events = []
+    hass.bus.async_listen(EVENT_STORY_PLAYED, events.append)
+
+    await manager.async_play(story_id, record_only=True, source="Dieses Gerät")
+    await hass.async_block_till_done()
+
+    assert len(calls) == 0  # nothing was cast to a media player
+    assert manager.data.stats[story_id].play_count == 1
+    assert len(events) == 1
+    assert events[0].data["media_player"] == "Dieses Gerät"
+
+
 async def test_player_resolution_priority(
     hass: HomeAssistant, mock_entry: MockConfigEntry
 ):

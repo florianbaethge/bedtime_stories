@@ -4,6 +4,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
     empty: "No stories yet — add some in the card editor.",
     no_player: "No player available",
+    this_device: "This device",
+    play_failed: "Playback failed",
     sort_manual: "My order",
     sort_alphabetical: "A–Z",
     sort_play_count: "Favorites",
@@ -59,6 +61,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     desc: "Descending",
     show_sort_selector: "Show sort chips in the card",
     show_player: "Show player chip in the header",
+    show_device_toggle: "Show “This device” toggle",
+    show_device_toggle_help:
+      "Adds a header chip to play the story right here in the browser or companion app, instead of casting to a media player.",
     player_mode: "Playback target",
     player_mode_select: "Player select entity (switchable)",
     player_mode_fixed: "Fixed media player",
@@ -96,6 +101,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
   de: {
     empty: "Noch keine Geschichten – füge welche im Karten-Editor hinzu.",
     no_player: "Kein Player verfügbar",
+    this_device: "Dieses Gerät",
+    play_failed: "Wiedergabe fehlgeschlagen",
     sort_manual: "Meine Reihenfolge",
     sort_alphabetical: "A–Z",
     sort_play_count: "Lieblinge",
@@ -150,6 +157,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     desc: "Absteigend",
     show_sort_selector: "Sortier-Chips in der Karte anzeigen",
     show_player: "Player-Chip im Kopf anzeigen",
+    show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
+    show_device_toggle_help:
+      "Fügt oben einen Chip hinzu, um die Geschichte direkt hier im Browser oder in der Companion-App abzuspielen statt auf einen Mediaplayer zu casten.",
     player_mode: "Wiedergabeziel",
     player_mode_select: "Player-Auswahl-Entität (umschaltbar)",
     player_mode_fixed: "Fester Medienplayer",
