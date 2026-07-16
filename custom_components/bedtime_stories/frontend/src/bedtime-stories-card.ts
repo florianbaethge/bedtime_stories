@@ -66,7 +66,7 @@ export class BedtimeStoriesCard extends LitElement {
   }
 
   public static getStubConfig(): Partial<BedtimeStoriesCardConfig> {
-    return { title: "Gute-Nacht-Geschichten" };
+    return { title: "Bedtime Stories" };
   }
 
   public setConfig(config: BedtimeStoriesCardConfig): void {
