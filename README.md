@@ -92,14 +92,19 @@ YAML mode add `/bedtime_stories/bedtime-stories-card.js` as a module resource).
 
 ### Media files
 
-The media picker browses your Home Assistant media sources, including
-*My media* (`/media`), where you can upload MP3/M4A files directly in the
-browse dialog. The **cover image** uses the same picker (filtered to images),
-so you can browse existing cover art or upload a new picture the same way.
-Existing `media-source://media_source/local/...` IDs from your old
-`picture-glance` cards can be pasted into the *Media URL / content id* field
-as-is, and cover URLs like `/api/image/serve/<id>/512x512` still work — paste
-them into the cover's *Advanced* URL field.
+Both the audio and the cover image offer two ways to set a file:
+
+- **Browse** your Home Assistant media sources (the media picker) and pick an
+  existing file, or
+- **Upload** a new file straight from the editor with the *Upload* button — it
+  lands in *My media* (`/media`), the same folder a Samba/SMB share exposes, so
+  you don't need to leave Home Assistant to add stories or cover art.
+
+Uploading needs a writable local media source (the default *My media*); if none
+is found the editor says so and you can still upload via *Settings → Media* or a
+share. Existing `media-source://media_source/local/...` IDs can be pasted into
+the *Media URL / content id* field as-is, and cover URLs like
+`/api/image/serve/<id>/512x512` still work in the cover's *Advanced* URL field.
 
 ## Card options
 

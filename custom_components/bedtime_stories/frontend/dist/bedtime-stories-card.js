@@ -158,10 +158,15 @@ const TRANSLATIONS = {
         advanced: "Advanced",
         media_selected: "Selected media",
         media_none: "No media file selected yet",
-        media_help: "Browse Home Assistant media — files can be uploaded to “My media” right in the browse dialog.",
+        media_help: "Browse your Home Assistant media, or upload a new audio file straight to “My media” with the button below.",
         cover_selected: "Selected image",
         cover_none: "No cover image selected yet",
-        cover_help: "Pick a cover from Home Assistant media — browse existing images or upload one, just like the audio file.",
+        cover_help: "Browse your Home Assistant media, or upload a picture straight to “My media” with the button below.",
+        or: "or",
+        upload_file: "Upload",
+        uploading: "Uploading…",
+        upload_failed: "Upload failed",
+        upload_no_media_source: "No writable media folder found. Upload via Settings → Media, or use a share.",
         image_url: "Cover image URL / content id",
         image_url_help: "Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",
         duration_help: "Shown as a badge on the tile, e.g. “~20m”.",
@@ -244,10 +249,15 @@ const TRANSLATIONS = {
         advanced: "Erweitert",
         media_selected: "Ausgewählte Medien",
         media_none: "Noch keine Mediendatei ausgewählt",
-        media_help: "Durchsuche die Home-Assistant-Medien — Dateien kannst du direkt im Dialog unter „Meine Medien“ hochladen.",
+        media_help: "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten eine neue Audiodatei direkt in „Meine Medien“ hoch.",
         cover_selected: "Ausgewähltes Bild",
         cover_none: "Noch kein Cover-Bild ausgewählt",
-        cover_help: "Wähle ein Cover aus den Home-Assistant-Medien — bestehende Bilder durchsuchen oder hochladen, genau wie die Audiodatei.",
+        cover_help: "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild direkt in „Meine Medien“ hoch.",
+        or: "oder",
+        upload_file: "Hochladen",
+        uploading: "Wird hochgeladen…",
+        upload_failed: "Upload fehlgeschlagen",
+        upload_no_media_source: "Kein beschreibbarer Medienordner gefunden. Lade über Einstellungen → Medien hoch oder nutze eine Freigabe.",
         image_url: "Cover-Bild-URL / Content-ID",
         image_url_help: "Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",
         duration_help: "Wird als Badge auf der Kachel angezeigt, z. B. „~20m“.",
@@ -979,7 +989,147 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         const segment = decodeURIComponent(clean.split("/").pop() ?? "");
         return segment || draft.image;
     }
+    // ---- direct upload to "My media" -----------------------------------------
+    /** Find a writable local media_source folder to upload into (cached). */
+    async _localMediaFolder() {
+        if (this._uploadFolder)
+            return this._uploadFolder;
+        if (!this.hass)
+            return null;
+        const isLocal = (id) => !!id && id.startsWith("media-source://media_source/local");
+        try {
+            const root = await this.hass.callWS({
+                type: "media_source/browse_media",
+            });
+            const local = (root.children ?? []).find((c) => isLocal(c.media_content_id));
+            if (!isLocal(local?.media_content_id))
+                return null;
+            const branch = await this.hass.callWS({
+                type: "media_source/browse_media",
+                media_content_id: local.media_content_id,
+            });
+            // Upload needs a concrete media directory, not the bare local root.
+            const dir = (branch.children ?? []).find((c) => c.can_expand && isLocal(c.media_content_id));
+            this._uploadFolder = (dir ?? local).media_content_id;
+            return this._uploadFolder ?? null;
+        }
+        catch {
+            return null;
+        }
+    }
+    async _uploadToLocal(file) {
+        const folder = await this._localMediaFolder();
+        if (!folder || !this.hass) {
+            this._error = this._l("upload_no_media_source");
+            return null;
+        }
+        const form = new FormData();
+        form.append("media_content_id", folder);
+        form.append("file", file);
+        const resp = await this.hass.fetchWithAuth("/api/media_source/local_source/upload", { method: "POST", body: form });
+        if (!resp.ok) {
+            throw new Error(`${this._l("upload_failed")} (HTTP ${resp.status})`);
+        }
+        const data = (await resp.json());
+        // The endpoint returns the new id; fall back to composing it from the
+        // target folder + filename (media_source ids are raw paths).
+        return data.media_content_id ?? data.id ?? `${folder}/${file.name}`;
+    }
+    async _uploadMediaFile(ev) {
+        const input = ev.target;
+        const file = input.files?.[0];
+        input.value = "";
+        if (!file || !this._storyDraft)
+            return;
+        this._uploading = "media";
+        this._error = undefined;
+        try {
+            const id = await this._uploadToLocal(file);
+            if (!id)
+                return;
+            const type = file.type || "audio/mpeg";
+            const draft = {
+                ...this._storyDraft,
+                media_content_id: id,
+                media_content_type: type,
+                media: {
+                    media_content_id: id,
+                    media_content_type: type,
+                    metadata: { title: file.name },
+                },
+            };
+            if (!draft.title.trim())
+                draft.title = file.name.replace(/\.[^./\\]+$/, "");
+            this._storyDraft = draft;
+            if (draft.id)
+                this._scheduleContentSave();
+        }
+        catch (err) {
+            this._error =
+                err?.message ?? this._l("upload_failed");
+        }
+        finally {
+            this._uploading = undefined;
+        }
+    }
+    async _uploadCoverFile(ev) {
+        const input = ev.target;
+        const file = input.files?.[0];
+        input.value = "";
+        if (!file || !this._storyDraft)
+            return;
+        this._uploading = "cover";
+        this._error = undefined;
+        try {
+            const id = await this._uploadToLocal(file);
+            if (!id)
+                return;
+            this._storyDraft = {
+                ...this._storyDraft,
+                image: id,
+                cover_media: {
+                    media_content_id: id,
+                    media_content_type: file.type || "image/*",
+                },
+            };
+            if (this._storyDraft.id)
+                this._scheduleContentSave();
+        }
+        catch (err) {
+            this._error =
+                err?.message ?? this._l("upload_failed");
+        }
+        finally {
+            this._uploading = undefined;
+        }
+    }
     // ---- rendering ----------------------------------------------------------
+    /** "…or upload a file" row shown under the media / cover pickers. */
+    _renderUploadRow(kind, accept, handler) {
+        return b `
+      <div class="upload-row">
+        <span class="upload-or">${this._l("or")}</span>
+        <mwc-button
+          outlined
+          dense
+          .disabled=${this._uploading !== undefined}
+          @click=${(ev) => ev.currentTarget
+            .nextElementSibling.click()}
+        >
+          <ha-icon slot="icon" icon="mdi:tray-arrow-up"></ha-icon>
+          ${this._uploading === kind
+            ? this._l("uploading")
+            : this._l("upload_file")}
+        </mwc-button>
+        <input
+          class="file-input"
+          type="file"
+          accept=${accept}
+          @change=${handler}
+        />
+      </div>
+    `;
+    }
     render() {
         if (!this.hass || !this._config)
             return b ``;
@@ -1287,6 +1437,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             .computeLabel=${computeLabel}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
+          ${this._renderUploadRow("media", "audio/*", this._uploadMediaFile)}
           <div class="media-status ${draft.media_content_id ? "ok" : ""}">
             <ha-icon
               icon=${draft.media_content_id
@@ -1314,6 +1465,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             .computeLabel=${this._noLabel}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
+          ${this._renderUploadRow("cover", "image/*", this._uploadCoverFile)}
           <div class="media-status ${draft.image ? "ok" : ""}">
             <ha-icon
               icon=${draft.image
@@ -1652,6 +1804,19 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
     .media-status ha-icon {
       --mdc-icon-size: 16px;
     }
+    .upload-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .upload-or {
+      font-size: 0.78rem;
+      color: var(--secondary-text-color);
+    }
+    .file-input {
+      display: none;
+    }
     .advanced-toggle {
       display: flex;
       align-items: center;
@@ -1749,6 +1914,9 @@ __decorate([
 __decorate([
     r()
 ], BedtimeStoriesCardEditor.prototype, "_error", void 0);
+__decorate([
+    r()
+], BedtimeStoriesCardEditor.prototype, "_uploading", void 0);
 __decorate([
     r()
 ], BedtimeStoriesCardEditor.prototype, "_dragOverId", void 0);
@@ -2701,7 +2869,7 @@ window.customCards.push({
     documentationURL: "https://github.com/florianbaethge/bedtime_stories",
 });
 // eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.6"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
+console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.7"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
 
 export { BedtimeStoriesCard };
 //# sourceMappingURL=bedtime-stories-card.js.map
