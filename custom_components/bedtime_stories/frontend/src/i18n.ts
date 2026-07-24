@@ -14,6 +14,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     played_once: "played once",
     played_times: "played {count}×",
     playing: "Playing…",
+    pause: "Pause",
+    resume: "Resume",
+    now_playing: "Now playing",
     // editor
     tab_settings: "Settings",
     tab_content: "Content",
@@ -70,6 +73,12 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     show_device_toggle: "Show “This device” toggle",
     show_device_toggle_help:
       "Adds a header chip to play the story right here in the browser or companion app, instead of casting to a media player.",
+    show_now_playing: "Show playback controls",
+    show_now_playing_help:
+      "Shows a play/pause button and a progress bar above the stories for whatever is currently playing — on the selected media player or on this device.",
+    keep_awake: "Keep screen awake on this device",
+    keep_awake_help:
+      "While a story plays on “This device”, requests a screen wake lock so the display doesn’t sleep and cut off playback. Only affects this-device playback.",
     player_mode: "Playback target",
     player_mode_select: "Player select entity (switchable)",
     player_mode_fixed: "Fixed media player",
@@ -117,6 +126,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     played_once: "1× gehört",
     played_times: "{count}× gehört",
     playing: "Läuft…",
+    pause: "Pause",
+    resume: "Fortsetzen",
+    now_playing: "Wird abgespielt",
     tab_settings: "Einstellungen",
     tab_content: "Inhalte",
     section_appearance: "Darstellung",
@@ -172,6 +184,12 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
     show_device_toggle_help:
       "Fügt oben einen Chip hinzu, um die Geschichte direkt hier im Browser oder in der Companion-App abzuspielen statt auf einen Mediaplayer zu casten.",
+    show_now_playing: "Wiedergabesteuerung anzeigen",
+    show_now_playing_help:
+      "Zeigt über den Geschichten einen Play/Pause-Knopf und einen Fortschrittsbalken für das, was gerade läuft — auf dem gewählten Mediaplayer oder auf diesem Gerät.",
+    keep_awake: "Bildschirm auf diesem Gerät wachhalten",
+    keep_awake_help:
+      "Während eine Geschichte auf „Dieses Gerät“ läuft, wird ein Wake-Lock angefordert, damit der Bildschirm nicht in den Ruhezustand geht und die Wiedergabe abbricht. Betrifft nur die Wiedergabe auf diesem Gerät.",
     player_mode: "Wiedergabeziel",
     player_mode_select: "Player-Auswahl-Entität (umschaltbar)",
     player_mode_fixed: "Fester Medienplayer",

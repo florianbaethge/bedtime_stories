@@ -45,6 +45,34 @@ interface SortChoice {
   direction: SortDirection;
 }
 
+/** Unified view of whatever is currently playing (cast target or this device). */
+interface ActivePlayback {
+  story: Story;
+  /** True while actually producing sound (drives the equalizer / pause icon). */
+  playing: boolean;
+  /** True when the audio plays in this browser tab rather than on a player. */
+  local: boolean;
+  position: number;
+  /** Total length in seconds, or 0 when unknown (streams). */
+  duration: number;
+  canSeek: boolean;
+  canPause: boolean;
+}
+
+/** Media-player `supported_features` bits we care about. */
+const FEATURE_PAUSE = 1;
+const FEATURE_SEEK = 2;
+const FEATURE_PLAY = 16384;
+
+/** Minimal Screen Wake Lock typings (avoids depending on the DOM lib version). */
+interface WakeLockLike {
+  release(): Promise<void>;
+  addEventListener(type: "release", listener: () => void): void;
+}
+type WakeLockNavigator = Navigator & {
+  wakeLock?: { request(type: "screen"): Promise<WakeLockLike> };
+};
+
 @customElement("bedtime-stories-card")
 export class BedtimeStoriesCard extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -67,11 +95,27 @@ export class BedtimeStoriesCard extends LitElement {
 
   @state() private _localPlayingId: string | null = null;
 
+  @state() private _localPaused = false;
+
+  @state() private _localPos = 0;
+
+  @state() private _localDur = 0;
+
+  /** While the user drags the seek slider, freeze the shown position. */
+  @state() private _scrubbing = false;
+
+  @state() private _scrubValue = 0;
+
   @query("audio") private _audioEl?: HTMLAudioElement;
 
   private _unsubscribe?: Promise<() => Promise<void>>;
 
   private _subscribedEntry?: string;
+
+  /** Ticks the displayed position for external players between hass updates. */
+  private _positionTimer?: number;
+
+  private _wakeLock?: WakeLockLike;
 
   public static getConfigElement(): HTMLElement {
     return document.createElement("bedtime-stories-card-editor");
@@ -105,18 +149,22 @@ export class BedtimeStoriesCard extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
     this._resubscribe();
+    document.addEventListener("visibilitychange", this._onVisibility);
   }
 
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     this._teardown();
     this._stopLocal();
+    document.removeEventListener("visibilitychange", this._onVisibility);
+    this._stopPositionTimer();
   }
 
   protected updated(): void {
     if (this.hass && !this._unsubscribe) {
       this._resubscribe();
     }
+    this._syncPositionTimer();
   }
 
   private _teardown(): void {
@@ -192,12 +240,104 @@ export class BedtimeStoriesCard extends LitElement {
   private _stopLocal(): void {
     this._audioEl?.pause();
     this._localPlayingId = null;
+    this._localPaused = false;
+    this._localPos = 0;
+    this._localDur = 0;
+    this._releaseWakeLock();
   }
+
+  private _onAudioMeta = (): void => {
+    const d = this._audioEl?.duration ?? 0;
+    this._localDur = Number.isFinite(d) ? d : 0;
+  };
+
+  private _onAudioTime = (): void => {
+    if (this._scrubbing) return;
+    this._localPos = this._audioEl?.currentTime ?? 0;
+  };
+
+  private _onAudioPlay = (): void => {
+    this._localPaused = false;
+    void this._acquireWakeLock();
+  };
+
+  private _onAudioPause = (): void => {
+    this._localPaused = true;
+    this._releaseWakeLock();
+  };
+
+  private _onAudioEnded = (): void => {
+    this._localPlayingId = null;
+    this._localPaused = false;
+    this._localPos = 0;
+    this._releaseWakeLock();
+  };
 
   private _onAudioError = (): void => {
     this._localPlayingId = null;
+    this._releaseWakeLock();
     if (this._playHere) this._flashError(localize(this.hass, "play_failed"));
   };
+
+  // ---- screen wake lock (keep the device awake while playing locally) -------
+
+  private async _acquireWakeLock(): Promise<void> {
+    if (this._config?.keep_awake === false) return;
+    const nav = navigator as WakeLockNavigator;
+    if (!nav.wakeLock || this._wakeLock) return;
+    try {
+      const lock = await nav.wakeLock.request("screen");
+      this._wakeLock = lock;
+      lock.addEventListener("release", () => {
+        if (this._wakeLock === lock) this._wakeLock = undefined;
+      });
+    } catch {
+      // Denied (page hidden / unsupported) — playback still works.
+    }
+  }
+
+  private _releaseWakeLock(): void {
+    this._wakeLock?.release().catch(() => undefined);
+    this._wakeLock = undefined;
+  }
+
+  /** The lock is dropped when the screen turns off; re-take it once visible. */
+  private _onVisibility = (): void => {
+    if (
+      document.visibilityState === "visible" &&
+      this._localPlayingId &&
+      !this._localPaused
+    ) {
+      void this._acquireWakeLock();
+    }
+  };
+
+  // ---- external-player position ticker --------------------------------------
+
+  private _syncPositionTimer(): void {
+    const active = this._activePlayback();
+    const needsTick =
+      !!active &&
+      !active.local &&
+      active.playing &&
+      this._config?.show_now_playing !== false &&
+      !this._scrubbing;
+    if (needsTick && this._positionTimer === undefined) {
+      this._positionTimer = window.setInterval(
+        () => this.requestUpdate(),
+        1000
+      );
+    } else if (!needsTick) {
+      this._stopPositionTimer();
+    }
+  }
+
+  private _stopPositionTimer(): void {
+    if (this._positionTimer !== undefined) {
+      window.clearInterval(this._positionTimer);
+      this._positionTimer = undefined;
+    }
+  }
 
   private _activeSort(): SortChoice {
     if (this._config?.show_sort_selector && this._localSort) {
@@ -306,16 +446,101 @@ export class BedtimeStoriesCard extends LitElement {
     });
   }
 
-  private _playingStoryId(): string | null {
-    if (this._playHere) return this._localPlayingId;
+  /** Whatever is currently loaded on the active target, unified across modes. */
+  private _activePlayback(): ActivePlayback | null {
+    const lib = this._library;
+    if (!lib || !this.hass) return null;
+
+    if (this._playHere) {
+      if (!this._localPlayingId) return null;
+      const story = lib.stories.find((s) => s.id === this._localPlayingId);
+      if (!story) return null;
+      const dur = Number.isFinite(this._localDur) ? this._localDur : 0;
+      return {
+        story,
+        local: true,
+        playing: !this._localPaused,
+        position: this._localPos,
+        duration: dur > 0 ? dur : 0,
+        canSeek: dur > 0,
+        canPause: true,
+      };
+    }
+
     const player = this._targetPlayer();
-    if (!player || !this.hass) return null;
-    const st = this.hass.states[player];
-    if (!st || st.state !== "playing") return null;
+    const st = player ? this.hass.states[player] : undefined;
+    if (!st || (st.state !== "playing" && st.state !== "paused")) return null;
     const title = st.attributes.media_title as string | undefined;
     if (!title) return null;
-    const story = this._library?.stories.find((s) => s.title === title);
-    return story?.id ?? null;
+    const story = lib.stories.find((s) => s.title === title);
+    if (!story) return null;
+
+    const duration = Number(st.attributes.media_duration) || 0;
+    let position = Number(st.attributes.media_position) || 0;
+    const updatedAt = st.attributes.media_position_updated_at as
+      | string
+      | undefined;
+    if (st.state === "playing" && updatedAt) {
+      position += (Date.now() - Date.parse(updatedAt)) / 1000;
+    }
+    if (duration > 0) position = Math.min(position, duration);
+    const feat = Number(st.attributes.supported_features) || 0;
+    return {
+      story,
+      local: false,
+      playing: st.state === "playing",
+      position: Math.max(0, position),
+      duration,
+      canSeek: (feat & FEATURE_SEEK) !== 0 && duration > 0,
+      canPause:
+        (feat & FEATURE_PAUSE) !== 0 || (feat & FEATURE_PLAY) !== 0,
+    };
+  }
+
+  private _togglePlayPause(active: ActivePlayback): void {
+    if (active.local) {
+      const audio = this._audioEl;
+      if (!audio) return;
+      if (audio.paused) void audio.play().catch(() => undefined);
+      else audio.pause();
+      return;
+    }
+    const player = this._targetPlayer();
+    if (!player || !this.hass) return;
+    void this.hass.callService(
+      "media_player",
+      active.playing ? "media_pause" : "media_play",
+      { entity_id: player }
+    );
+  }
+
+  private _onScrub(ev: Event): void {
+    this._scrubbing = true;
+    this._scrubValue = Number((ev.target as HTMLInputElement).value);
+  }
+
+  private _onSeek(ev: Event, active: ActivePlayback): void {
+    const value = Number((ev.target as HTMLInputElement).value);
+    this._scrubbing = false;
+    if (active.local) {
+      if (this._audioEl) this._audioEl.currentTime = value;
+      this._localPos = value;
+      return;
+    }
+    const player = this._targetPlayer();
+    if (player && this.hass) {
+      void this.hass.callService("media_player", "media_seek", {
+        entity_id: player,
+        seek_position: value,
+      });
+    }
+  }
+
+  private _fmtTime(sec: number): string {
+    const total = Number.isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
+    const m = Math.floor(total / 60);
+    const r = total % 60;
+    return `${m}:${r.toString().padStart(2, "0")}`;
   }
 
   // ---- actions ----------------------------------------------------------------
@@ -384,6 +609,9 @@ export class BedtimeStoriesCard extends LitElement {
       return;
     }
     try {
+      this._localPos = 0;
+      this._localDur = 0;
+      this._localPaused = false;
       audio.src = url;
       await audio.play();
       this._localPlayingId = story.id;
@@ -461,7 +689,9 @@ export class BedtimeStoriesCard extends LitElement {
     const categories = this._visibleCategories();
     // Density only applies to the list layout; grid tiles scale via columns.
     const compact = config.layout === "list" && config.density === "compact";
-    const playing = this._playingStoryId();
+    const active = this._activePlayback();
+    const activeId = active?.story.id ?? null;
+    const playingNow = active?.playing ? active.story.id : null;
     const player = this._targetPlayer();
     const showChip =
       config.show_player !== false &&
@@ -503,6 +733,9 @@ export class BedtimeStoriesCard extends LitElement {
           </div>
         </div>
         ${config.show_sort_selector ? this._renderSortChips() : nothing}
+        ${config.show_now_playing !== false && active
+          ? this._renderNowPlaying(active)
+          : nothing}
         ${this._error
           ? html`<div class="error">${this._error}</div>`
           : nothing}
@@ -512,10 +745,14 @@ export class BedtimeStoriesCard extends LitElement {
               ${localize(this.hass, "empty")}
             </div>`
           : categories.map((category) =>
-              this._renderCategory(category, playing)
+              this._renderCategory(category, activeId, playingNow)
             )}
         <audio
-          @ended=${() => (this._localPlayingId = null)}
+          @loadedmetadata=${this._onAudioMeta}
+          @timeupdate=${this._onAudioTime}
+          @play=${this._onAudioPlay}
+          @pause=${this._onAudioPause}
+          @ended=${this._onAudioEnded}
           @error=${this._onAudioError}
         ></audio>
       </ha-card>
@@ -547,9 +784,63 @@ export class BedtimeStoriesCard extends LitElement {
     `;
   }
 
+  private _renderNowPlaying(active: ActivePlayback): TemplateResult {
+    const cover = this._coverUrl(active.story);
+    const dur = active.duration;
+    const pos = this._scrubbing ? this._scrubValue : active.position;
+    return html`
+      <div class="now-playing">
+        <span
+          class="np-cover"
+          style=${styleMap(
+            cover ? { backgroundImage: `url("${cover}")` } : {}
+          )}
+        >
+          ${!cover
+            ? html`<ha-icon icon="mdi:book-open-variant"></ha-icon>`
+            : nothing}
+        </span>
+        <div class="np-main">
+          <span class="np-title">${active.story.title}</span>
+          <div class="np-seek">
+            <span class="np-time">${this._fmtTime(pos)}</span>
+            ${dur > 0
+              ? html`<input
+                  class="np-range"
+                  type="range"
+                  min="0"
+                  max=${String(Math.ceil(dur))}
+                  step="1"
+                  .value=${String(Math.floor(pos))}
+                  ?disabled=${!active.canSeek}
+                  aria-label=${localize(this.hass, "now_playing")}
+                  @input=${(e: Event) => this._onScrub(e)}
+                  @change=${(e: Event) => this._onSeek(e, active)}
+                />`
+              : html`<span class="np-track"></span>`}
+            <span class="np-time"
+              >${dur > 0 ? this._fmtTime(dur) : "–:–"}</span
+            >
+          </div>
+        </div>
+        <button
+          class="np-btn"
+          ?disabled=${!active.canPause}
+          title=${localize(this.hass, active.playing ? "pause" : "resume")}
+          @click=${() => this._togglePlayPause(active)}
+        >
+          <ha-icon
+            icon=${active.playing ? "mdi:pause" : "mdi:play"}
+          ></ha-icon>
+        </button>
+      </div>
+    `;
+  }
+
   private _renderCategory(
     category: Category,
-    playing: string | null
+    activeId: string | null,
+    playingNow: string | null
   ): TemplateResult {
     const stories = this._sortedStories(category);
     if (stories.length === 0) return html``;
@@ -572,22 +863,27 @@ export class BedtimeStoriesCard extends LitElement {
         >
           ${stories.map((story) =>
             grid
-              ? this._renderTile(story, playing)
-              : this._renderRow(story, playing)
+              ? this._renderTile(story, activeId, playingNow)
+              : this._renderRow(story, activeId, playingNow)
           )}
         </div>
       </div>
     `;
   }
 
-  private _renderTile(story: Story, playing: string | null): TemplateResult {
+  private _renderTile(
+    story: Story,
+    activeId: string | null,
+    playingNow: string | null
+  ): TemplateResult {
     const config = this._config!;
-    const isPlaying = playing === story.id;
+    const isActive = activeId === story.id;
+    const isPlaying = playingNow === story.id;
     const justPlayed = this._justPlayed === story.id;
     const cover = this._coverUrl(story);
     return html`
       <button
-        class=${classMap({ tile: true, playing: isPlaying })}
+        class=${classMap({ tile: true, playing: isActive })}
         style=${styleMap(
           cover ? { backgroundImage: `url("${cover}")` } : {}
         )}
@@ -622,14 +918,19 @@ export class BedtimeStoriesCard extends LitElement {
     `;
   }
 
-  private _renderRow(story: Story, playing: string | null): TemplateResult {
+  private _renderRow(
+    story: Story,
+    activeId: string | null,
+    playingNow: string | null
+  ): TemplateResult {
     const config = this._config!;
-    const isPlaying = playing === story.id;
+    const isActive = activeId === story.id;
+    const isPlaying = playingNow === story.id;
     const justPlayed = this._justPlayed === story.id;
     const cover = this._coverUrl(story);
     return html`
       <button
-        class=${classMap({ row: true, playing: isPlaying })}
+        class=${classMap({ row: true, playing: isActive })}
         aria-label=${story.title}
         @click=${() => this._play(story)}
       >
@@ -721,6 +1022,108 @@ export class BedtimeStoriesCard extends LitElement {
     }
     audio {
       display: none;
+    }
+    /* --- now playing bar --- */
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0 4px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: var(--secondary-background-color);
+    }
+    .np-cover {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background-color: var(--card-background-color);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--secondary-text-color);
+      overflow: hidden;
+    }
+    .np-cover ha-icon {
+      --mdc-icon-size: 22px;
+    }
+    .np-main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+      gap: 4px;
+    }
+    .np-title {
+      color: var(--primary-text-color);
+      font-size: 0.95rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .np-seek {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .np-time {
+      color: var(--secondary-text-color);
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      min-width: 30px;
+    }
+    .np-time:last-child {
+      text-align: right;
+    }
+    .np-range {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
+    .np-range:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    .np-track {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--divider-color);
+    }
+    .np-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease;
+    }
+    .np-btn:active {
+      transform: scale(0.92);
+    }
+    .np-btn:disabled {
+      background: var(--divider-color);
+      color: var(--secondary-text-color);
+      cursor: default;
+    }
+    .np-btn ha-icon {
+      --mdc-icon-size: 26px;
     }
     .sort-chips {
       display: flex;
