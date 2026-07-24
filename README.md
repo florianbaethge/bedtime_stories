@@ -46,6 +46,15 @@ target on top.
   browser_mod needed), so you can listen on the phone in your hand. Plays are
   still counted. The choice is stored per browser; hide the toggle with
   `show_device_toggle: false`.
+- **Playback controls**: an optional bar above the stories shows the cover and
+  title of whatever is currently playing, with a play/pause button and a
+  progress bar you can scrub. Works both for the selected media player (position
+  and seeking come from the player, when it supports them) and for _this device_
+  playback (full control of the in-browser audio). Hide it with
+  `show_now_playing: false`.
+- **Keep awake**: while a story plays on _this device_, the card takes a screen
+  wake lock so the display doesn't sleep and cut off playback mid-story. Only
+  affects this-device playback; disable with `keep_awake: false`.
 - **Playing indicator**: the tile currently playing on the target player gets
   an animated equalizer and a highlight ring
 - **History**: every playback fires a `bedtime_stories_story_played` event and
@@ -123,6 +132,8 @@ the *Media URL / content id* field as-is, and cover URLs like
 | `show_sort_selector` | `false` | Sort chips inside the card |
 | `show_player` | `true` | Player chip in the header (tap to switch player) |
 | `show_device_toggle` | `true` | Header toggle to play in this browser / app |
+| `show_now_playing` | `true` | Play/pause + progress bar above the stories |
+| `keep_awake` | `true` | Screen wake lock during _this device_ playback |
 | `player_mode` | `select` | `select` (use the select entity) or `fixed` |
 | `media_player` | – | Target when `player_mode: fixed` |
 | `categories` | all | List of category IDs to show |

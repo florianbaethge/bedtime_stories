@@ -144,6 +144,9 @@ const TRANSLATIONS = {
         played_once: "played once",
         played_times: "played {count}×",
         playing: "Playing…",
+        pause: "Pause",
+        resume: "Resume",
+        now_playing: "Now playing",
         // editor
         tab_settings: "Settings",
         tab_content: "Content",
@@ -192,6 +195,10 @@ const TRANSLATIONS = {
         show_player: "Show player chip in the header",
         show_device_toggle: "Show “This device” toggle",
         show_device_toggle_help: "Adds a header chip to play the story right here in the browser or companion app, instead of casting to a media player.",
+        show_now_playing: "Show playback controls",
+        show_now_playing_help: "Shows a play/pause button and a progress bar above the stories for whatever is currently playing — on the selected media player or on this device.",
+        keep_awake: "Keep screen awake on this device",
+        keep_awake_help: "While a story plays on “This device”, requests a screen wake lock so the display doesn’t sleep and cut off playback. Only affects this-device playback.",
         player_mode: "Playback target",
         player_mode_select: "Player select entity (switchable)",
         player_mode_fixed: "Fixed media player",
@@ -236,6 +243,9 @@ const TRANSLATIONS = {
         played_once: "1× gehört",
         played_times: "{count}× gehört",
         playing: "Läuft…",
+        pause: "Pause",
+        resume: "Fortsetzen",
+        now_playing: "Wird abgespielt",
         tab_settings: "Einstellungen",
         tab_content: "Inhalte",
         section_appearance: "Darstellung",
@@ -283,6 +293,10 @@ const TRANSLATIONS = {
         show_player: "Player-Chip im Kopf anzeigen",
         show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
         show_device_toggle_help: "Fügt oben einen Chip hinzu, um die Geschichte direkt hier im Browser oder in der Companion-App abzuspielen statt auf einen Mediaplayer zu casten.",
+        show_now_playing: "Wiedergabesteuerung anzeigen",
+        show_now_playing_help: "Zeigt über den Geschichten einen Play/Pause-Knopf und einen Fortschrittsbalken für das, was gerade läuft — auf dem gewählten Mediaplayer oder auf diesem Gerät.",
+        keep_awake: "Bildschirm auf diesem Gerät wachhalten",
+        keep_awake_help: "Während eine Geschichte auf „Dieses Gerät“ läuft, wird ein Wake-Lock angefordert, damit der Bildschirm nicht in den Ruhezustand geht und die Wiedergabe abbricht. Betrifft nur die Wiedergabe auf diesem Gerät.",
         player_mode: "Wiedergabeziel",
         player_mode_select: "Player-Auswahl-Entität (umschaltbar)",
         player_mode_fixed: "Fester Medienplayer",
@@ -395,6 +409,8 @@ const DEFAULT_CONFIG = {
     show_sort_selector: false,
     show_player: true,
     show_device_toggle: true,
+    show_now_playing: true,
+    keep_awake: true,
     player_mode: "select",
 };
 
@@ -443,6 +459,12 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
                 return this._l("columns_help");
             if (schema.name === "show_device_toggle") {
                 return this._l("show_device_toggle_help");
+            }
+            if (schema.name === "show_now_playing") {
+                return this._l("show_now_playing_help");
+            }
+            if (schema.name === "keep_awake") {
+                return this._l("keep_awake_help");
             }
             return undefined;
         };
@@ -671,6 +693,8 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
             schema.push({ name: "show_player", selector: { boolean: {} } });
         }
         schema.push({ name: "show_device_toggle", selector: { boolean: {} } });
+        schema.push({ name: "show_now_playing", selector: { boolean: {} } });
+        schema.push({ name: "keep_awake", selector: { boolean: {} } });
         return schema;
     }
     _settingsChanged(ev) {
@@ -1989,6 +2013,10 @@ const SORT_MODES = [
 ];
 /** Chips that imply "most first" flip their default direction. */
 const DEFAULT_DESC = ["play_count", "last_played"];
+/** Media-player `supported_features` bits we care about. */
+const FEATURE_PAUSE = 1;
+const FEATURE_SEEK = 2;
+const FEATURE_PLAY = 16384;
 let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
     constructor() {
         super(...arguments);
@@ -1998,10 +2026,48 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         /** "This device" mode: play the audio in the browser instead of casting. */
         this._playHere = false;
         this._localPlayingId = null;
+        this._localPaused = false;
+        this._localPos = 0;
+        this._localDur = 0;
+        /** While the user drags the seek slider, freeze the shown position. */
+        this._scrubbing = false;
+        this._scrubValue = 0;
+        this._onAudioMeta = () => {
+            const d = this._audioEl?.duration ?? 0;
+            this._localDur = Number.isFinite(d) ? d : 0;
+        };
+        this._onAudioTime = () => {
+            if (this._scrubbing)
+                return;
+            this._localPos = this._audioEl?.currentTime ?? 0;
+        };
+        this._onAudioPlay = () => {
+            this._localPaused = false;
+            void this._acquireWakeLock();
+        };
+        this._onAudioPause = () => {
+            this._localPaused = true;
+            this._releaseWakeLock();
+        };
+        this._onAudioEnded = () => {
+            this._localPlayingId = null;
+            this._localPaused = false;
+            this._localPos = 0;
+            this._releaseWakeLock();
+        };
         this._onAudioError = () => {
             this._localPlayingId = null;
+            this._releaseWakeLock();
             if (this._playHere)
                 this._flashError(localize(this.hass, "play_failed"));
+        };
+        /** The lock is dropped when the screen turns off; re-take it once visible. */
+        this._onVisibility = () => {
+            if (document.visibilityState === "visible" &&
+                this._localPlayingId &&
+                !this._localPaused) {
+                void this._acquireWakeLock();
+            }
         };
     }
     static getConfigElement() {
@@ -2030,16 +2096,20 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
     connectedCallback() {
         super.connectedCallback();
         this._resubscribe();
+        document.addEventListener("visibilitychange", this._onVisibility);
     }
     disconnectedCallback() {
         super.disconnectedCallback();
         this._teardown();
         this._stopLocal();
+        document.removeEventListener("visibilitychange", this._onVisibility);
+        this._stopPositionTimer();
     }
     updated() {
         if (this.hass && !this._unsubscribe) {
             this._resubscribe();
         }
+        this._syncPositionTimer();
     }
     _teardown() {
         this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
@@ -2105,6 +2175,54 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
     _stopLocal() {
         this._audioEl?.pause();
         this._localPlayingId = null;
+        this._localPaused = false;
+        this._localPos = 0;
+        this._localDur = 0;
+        this._releaseWakeLock();
+    }
+    // ---- screen wake lock (keep the device awake while playing locally) -------
+    async _acquireWakeLock() {
+        if (this._config?.keep_awake === false)
+            return;
+        const nav = navigator;
+        if (!nav.wakeLock || this._wakeLock)
+            return;
+        try {
+            const lock = await nav.wakeLock.request("screen");
+            this._wakeLock = lock;
+            lock.addEventListener("release", () => {
+                if (this._wakeLock === lock)
+                    this._wakeLock = undefined;
+            });
+        }
+        catch {
+            // Denied (page hidden / unsupported) — playback still works.
+        }
+    }
+    _releaseWakeLock() {
+        this._wakeLock?.release().catch(() => undefined);
+        this._wakeLock = undefined;
+    }
+    // ---- external-player position ticker --------------------------------------
+    _syncPositionTimer() {
+        const active = this._activePlayback();
+        const needsTick = !!active &&
+            !active.local &&
+            active.playing &&
+            this._config?.show_now_playing !== false &&
+            !this._scrubbing;
+        if (needsTick && this._positionTimer === undefined) {
+            this._positionTimer = window.setInterval(() => this.requestUpdate(), 1000);
+        }
+        else if (!needsTick) {
+            this._stopPositionTimer();
+        }
+    }
+    _stopPositionTimer() {
+        if (this._positionTimer !== undefined) {
+            window.clearInterval(this._positionTimer);
+            this._positionTimer = undefined;
+        }
     }
     _activeSort() {
         if (this._config?.show_sort_selector && this._localSort) {
@@ -2205,20 +2323,99 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
             option: next.entity_id,
         });
     }
-    _playingStoryId() {
-        if (this._playHere)
-            return this._localPlayingId;
-        const player = this._targetPlayer();
-        if (!player || !this.hass)
+    /** Whatever is currently loaded on the active target, unified across modes. */
+    _activePlayback() {
+        const lib = this._library;
+        if (!lib || !this.hass)
             return null;
-        const st = this.hass.states[player];
-        if (!st || st.state !== "playing")
+        if (this._playHere) {
+            if (!this._localPlayingId)
+                return null;
+            const story = lib.stories.find((s) => s.id === this._localPlayingId);
+            if (!story)
+                return null;
+            const dur = Number.isFinite(this._localDur) ? this._localDur : 0;
+            return {
+                story,
+                local: true,
+                playing: !this._localPaused,
+                position: this._localPos,
+                duration: dur > 0 ? dur : 0,
+                canSeek: dur > 0,
+                canPause: true,
+            };
+        }
+        const player = this._targetPlayer();
+        const st = player ? this.hass.states[player] : undefined;
+        if (!st || (st.state !== "playing" && st.state !== "paused"))
             return null;
         const title = st.attributes.media_title;
         if (!title)
             return null;
-        const story = this._library?.stories.find((s) => s.title === title);
-        return story?.id ?? null;
+        const story = lib.stories.find((s) => s.title === title);
+        if (!story)
+            return null;
+        const duration = Number(st.attributes.media_duration) || 0;
+        let position = Number(st.attributes.media_position) || 0;
+        const updatedAt = st.attributes.media_position_updated_at;
+        if (st.state === "playing" && updatedAt) {
+            position += (Date.now() - Date.parse(updatedAt)) / 1000;
+        }
+        if (duration > 0)
+            position = Math.min(position, duration);
+        const feat = Number(st.attributes.supported_features) || 0;
+        return {
+            story,
+            local: false,
+            playing: st.state === "playing",
+            position: Math.max(0, position),
+            duration,
+            canSeek: (feat & FEATURE_SEEK) !== 0 && duration > 0,
+            canPause: (feat & FEATURE_PAUSE) !== 0 || (feat & FEATURE_PLAY) !== 0,
+        };
+    }
+    _togglePlayPause(active) {
+        if (active.local) {
+            const audio = this._audioEl;
+            if (!audio)
+                return;
+            if (audio.paused)
+                void audio.play().catch(() => undefined);
+            else
+                audio.pause();
+            return;
+        }
+        const player = this._targetPlayer();
+        if (!player || !this.hass)
+            return;
+        void this.hass.callService("media_player", active.playing ? "media_pause" : "media_play", { entity_id: player });
+    }
+    _onScrub(ev) {
+        this._scrubbing = true;
+        this._scrubValue = Number(ev.target.value);
+    }
+    _onSeek(ev, active) {
+        const value = Number(ev.target.value);
+        this._scrubbing = false;
+        if (active.local) {
+            if (this._audioEl)
+                this._audioEl.currentTime = value;
+            this._localPos = value;
+            return;
+        }
+        const player = this._targetPlayer();
+        if (player && this.hass) {
+            void this.hass.callService("media_player", "media_seek", {
+                entity_id: player,
+                seek_position: value,
+            });
+        }
+    }
+    _fmtTime(sec) {
+        const total = Number.isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
+        const m = Math.floor(total / 60);
+        const r = total % 60;
+        return `${m}:${r.toString().padStart(2, "0")}`;
     }
     // ---- actions ----------------------------------------------------------------
     _flashError(message) {
@@ -2285,6 +2482,9 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
             return;
         }
         try {
+            this._localPos = 0;
+            this._localDur = 0;
+            this._localPaused = false;
             audio.src = url;
             await audio.play();
             this._localPlayingId = story.id;
@@ -2353,7 +2553,9 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         const categories = this._visibleCategories();
         // Density only applies to the list layout; grid tiles scale via columns.
         const compact = config.layout === "list" && config.density === "compact";
-        const playing = this._playingStoryId();
+        const active = this._activePlayback();
+        const activeId = active?.story.id ?? null;
+        const playingNow = active?.playing ? active.story.id : null;
         const player = this._targetPlayer();
         const showChip = config.show_player !== false &&
             config.player_mode !== "fixed" &&
@@ -2393,6 +2595,9 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
           </div>
         </div>
         ${config.show_sort_selector ? this._renderSortChips() : A}
+        ${config.show_now_playing !== false && active
+            ? this._renderNowPlaying(active)
+            : A}
         ${this._error
             ? b `<div class="error">${this._error}</div>`
             : A}
@@ -2401,9 +2606,13 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
               <ha-icon icon="mdi:sleep"></ha-icon>
               ${localize(this.hass, "empty")}
             </div>`
-            : categories.map((category) => this._renderCategory(category, playing))}
+            : categories.map((category) => this._renderCategory(category, activeId, playingNow))}
         <audio
-          @ended=${() => (this._localPlayingId = null)}
+          @loadedmetadata=${this._onAudioMeta}
+          @timeupdate=${this._onAudioTime}
+          @play=${this._onAudioPlay}
+          @pause=${this._onAudioPause}
+          @ended=${this._onAudioEnded}
           @error=${this._onAudioError}
         ></audio>
       </ha-card>
@@ -2431,7 +2640,57 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
       </div>
     `;
     }
-    _renderCategory(category, playing) {
+    _renderNowPlaying(active) {
+        const cover = this._coverUrl(active.story);
+        const dur = active.duration;
+        const pos = this._scrubbing ? this._scrubValue : active.position;
+        return b `
+      <div class="now-playing">
+        <span
+          class="np-cover"
+          style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
+        >
+          ${!cover
+            ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
+            : A}
+        </span>
+        <div class="np-main">
+          <span class="np-title">${active.story.title}</span>
+          <div class="np-seek">
+            <span class="np-time">${this._fmtTime(pos)}</span>
+            ${dur > 0
+            ? b `<input
+                  class="np-range"
+                  type="range"
+                  min="0"
+                  max=${String(Math.ceil(dur))}
+                  step="1"
+                  .value=${String(Math.floor(pos))}
+                  ?disabled=${!active.canSeek}
+                  aria-label=${localize(this.hass, "now_playing")}
+                  @input=${(e) => this._onScrub(e)}
+                  @change=${(e) => this._onSeek(e, active)}
+                />`
+            : b `<span class="np-track"></span>`}
+            <span class="np-time"
+              >${dur > 0 ? this._fmtTime(dur) : "–:–"}</span
+            >
+          </div>
+        </div>
+        <button
+          class="np-btn"
+          ?disabled=${!active.canPause}
+          title=${localize(this.hass, active.playing ? "pause" : "resume")}
+          @click=${() => this._togglePlayPause(active)}
+        >
+          <ha-icon
+            icon=${active.playing ? "mdi:pause" : "mdi:play"}
+          ></ha-icon>
+        </button>
+      </div>
+    `;
+    }
+    _renderCategory(category, activeId, playingNow) {
         const stories = this._sortedStories(category);
         if (stories.length === 0)
             return b ``;
@@ -2452,20 +2711,21 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
           style=${o(gridStyle)}
         >
           ${stories.map((story) => grid
-            ? this._renderTile(story, playing)
-            : this._renderRow(story, playing))}
+            ? this._renderTile(story, activeId, playingNow)
+            : this._renderRow(story, activeId, playingNow))}
         </div>
       </div>
     `;
     }
-    _renderTile(story, playing) {
+    _renderTile(story, activeId, playingNow) {
         const config = this._config;
-        const isPlaying = playing === story.id;
+        const isActive = activeId === story.id;
+        const isPlaying = playingNow === story.id;
         const justPlayed = this._justPlayed === story.id;
         const cover = this._coverUrl(story);
         return b `
       <button
-        class=${e({ tile: true, playing: isPlaying })}
+        class=${e({ tile: true, playing: isActive })}
         style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
         aria-label=${story.title}
         @click=${() => this._play(story)}
@@ -2497,14 +2757,15 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
       </button>
     `;
     }
-    _renderRow(story, playing) {
+    _renderRow(story, activeId, playingNow) {
         const config = this._config;
-        const isPlaying = playing === story.id;
+        const isActive = activeId === story.id;
+        const isPlaying = playingNow === story.id;
         const justPlayed = this._justPlayed === story.id;
         const cover = this._coverUrl(story);
         return b `
       <button
-        class=${e({ row: true, playing: isPlaying })}
+        class=${e({ row: true, playing: isActive })}
         aria-label=${story.title}
         @click=${() => this._play(story)}
       >
@@ -2593,6 +2854,108 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
     }
     audio {
       display: none;
+    }
+    /* --- now playing bar --- */
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0 4px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: var(--secondary-background-color);
+    }
+    .np-cover {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background-color: var(--card-background-color);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--secondary-text-color);
+      overflow: hidden;
+    }
+    .np-cover ha-icon {
+      --mdc-icon-size: 22px;
+    }
+    .np-main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+      gap: 4px;
+    }
+    .np-title {
+      color: var(--primary-text-color);
+      font-size: 0.95rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .np-seek {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .np-time {
+      color: var(--secondary-text-color);
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      min-width: 30px;
+    }
+    .np-time:last-child {
+      text-align: right;
+    }
+    .np-range {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
+    .np-range:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    .np-track {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--divider-color);
+    }
+    .np-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease;
+    }
+    .np-btn:active {
+      transform: scale(0.92);
+    }
+    .np-btn:disabled {
+      background: var(--divider-color);
+      color: var(--secondary-text-color);
+      cursor: default;
+    }
+    .np-btn ha-icon {
+      --mdc-icon-size: 26px;
     }
     .sort-chips {
       display: flex;
@@ -2912,6 +3275,21 @@ __decorate([
     r()
 ], BedtimeStoriesCard.prototype, "_localPlayingId", void 0);
 __decorate([
+    r()
+], BedtimeStoriesCard.prototype, "_localPaused", void 0);
+__decorate([
+    r()
+], BedtimeStoriesCard.prototype, "_localPos", void 0);
+__decorate([
+    r()
+], BedtimeStoriesCard.prototype, "_localDur", void 0);
+__decorate([
+    r()
+], BedtimeStoriesCard.prototype, "_scrubbing", void 0);
+__decorate([
+    r()
+], BedtimeStoriesCard.prototype, "_scrubValue", void 0);
+__decorate([
     e$2("audio")
 ], BedtimeStoriesCard.prototype, "_audioEl", void 0);
 BedtimeStoriesCard = __decorate([
@@ -2926,7 +3304,7 @@ window.customCards.push({
     documentationURL: "https://github.com/florianbaethge/bedtime_stories",
 });
 // eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.1.7"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
+console.info(`%c BEDTIME-STORIES-CARD %c ${"0.2.0"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
 
 export { BedtimeStoriesCard };
 //# sourceMappingURL=bedtime-stories-card.js.map

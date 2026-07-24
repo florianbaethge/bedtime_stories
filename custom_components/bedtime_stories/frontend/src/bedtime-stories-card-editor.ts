@@ -351,6 +351,8 @@ export class BedtimeStoriesCardEditor extends LitElement {
       schema.push({ name: "show_player", selector: { boolean: {} } });
     }
     schema.push({ name: "show_device_toggle", selector: { boolean: {} } });
+    schema.push({ name: "show_now_playing", selector: { boolean: {} } });
+    schema.push({ name: "keep_awake", selector: { boolean: {} } });
     return schema;
   }
 
@@ -361,6 +363,12 @@ export class BedtimeStoriesCardEditor extends LitElement {
     if (schema.name === "columns") return this._l("columns_help");
     if (schema.name === "show_device_toggle") {
       return this._l("show_device_toggle_help");
+    }
+    if (schema.name === "show_now_playing") {
+      return this._l("show_now_playing_help");
+    }
+    if (schema.name === "keep_awake") {
+      return this._l("keep_awake_help");
     }
     return undefined;
   };

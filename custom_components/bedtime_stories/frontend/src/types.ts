@@ -87,6 +87,8 @@ export interface BedtimeStoriesCardConfig {
   show_sort_selector?: boolean;
   show_player?: boolean;
   show_device_toggle?: boolean;
+  show_now_playing?: boolean;
+  keep_awake?: boolean;
   player_mode?: "select" | "fixed";
   media_player?: string;
   categories?: string[];
@@ -106,6 +108,8 @@ export const DEFAULT_CONFIG: Required<
     | "show_sort_selector"
     | "show_player"
     | "show_device_toggle"
+    | "show_now_playing"
+    | "keep_awake"
     | "player_mode"
   >
 > = {
@@ -120,5 +124,7 @@ export const DEFAULT_CONFIG: Required<
   show_sort_selector: false,
   show_player: true,
   show_device_toggle: true,
+  show_now_playing: true,
+  keep_awake: true,
   player_mode: "select",
 };
