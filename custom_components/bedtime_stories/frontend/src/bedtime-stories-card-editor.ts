@@ -737,6 +737,9 @@ export class BedtimeStoriesCardEditor extends LitElement {
       return draft.cover_media.metadata.title;
     }
     if (!draft.image) return undefined;
+    if (draft.image.startsWith("/api/image/serve/")) {
+      return this._l("cover_uploaded");
+    }
     const clean = draft.image.split("?")[0];
     const segment = decodeURIComponent(clean.split("/").pop() ?? "");
     return segment || draft.image;
@@ -881,6 +884,83 @@ export class BedtimeStoriesCardEditor extends LitElement {
     }
   }
 
+  /** Long-edge size covers are served at (see _uploadCover). */
+  private static readonly _COVER_SERVE_SIZE = "512x512";
+
+  /**
+   * Shrink a picked cover in the browser before upload. Covers only ever render
+   * at ~44–400px, so a multi-megabyte screenshot is wasteful to upload and to
+   * store. Returns a JPEG capped at `maxDim` on its long edge; on any failure
+   * (non-raster file, decode error, already small) the original is returned.
+   */
+  private async _downscaleImage(
+    file: File,
+    maxDim = 1024,
+    quality = 0.85
+  ): Promise<File> {
+    if (!file.type.startsWith("image/") || file.type === "image/gif") {
+      return file;
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      if (scale >= 1) {
+        bitmap.close();
+        return file;
+      }
+      const w = Math.round(bitmap.width * scale);
+      const h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bitmap.close();
+        return file;
+      }
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", quality)
+      );
+      if (!blob) return file;
+      const name = `${file.name.replace(/\.[^./\\]+$/, "")}.jpg`;
+      return new File([blob], name, { type: "image/jpeg" });
+    } catch {
+      return file;
+    }
+  }
+
+  /**
+   * Upload a cover through HA's image_upload store, which serves resized,
+   * cacheable thumbnails from a stable URL (`/api/image/serve/<id>/WxH`, no
+   * per-request signature). That is the crucial difference from media_source,
+   * whose signed URLs change on every resolve and so defeat the browser cache.
+   * Falls back to a plain media_source upload if image_upload is unavailable —
+   * still downscaled, just not cacheable.
+   */
+  private async _uploadCover(file: File): Promise<string | null> {
+    if (!this.hass) return null;
+    const small = await this._downscaleImage(file);
+    try {
+      const form = new FormData();
+      form.append("file", small);
+      const resp = await this.hass.fetchWithAuth("/api/image/upload", {
+        method: "POST",
+        body: form,
+      });
+      if (resp.ok) {
+        const data = (await resp.json()) as { id?: string };
+        if (data.id) {
+          return `/api/image/serve/${data.id}/${BedtimeStoriesCardEditor._COVER_SERVE_SIZE}`;
+        }
+      }
+    } catch {
+      // fall through to the media_source fallback below
+    }
+    return this._uploadToLocal(small);
+  }
+
   private async _uploadCoverFile(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -889,15 +969,16 @@ export class BedtimeStoriesCardEditor extends LitElement {
     this._uploading = "cover";
     this._error = undefined;
     try {
-      const id = await this._uploadToLocal(file);
+      const id = await this._uploadCover(file);
       if (!id) return;
       this._storyDraft = {
         ...this._storyDraft,
         image: id,
-        cover_media: {
-          media_content_id: id,
-          media_content_type: file.type || "image/*",
-        },
+        // image_upload / plain-URL covers can't be represented in the media
+        // picker; only media_source ids populate it.
+        cover_media: isMediaSource(id)
+          ? { media_content_id: id, media_content_type: "image/*" }
+          : undefined,
       };
       if (this._storyDraft.id) this._scheduleContentSave();
     } catch (err) {

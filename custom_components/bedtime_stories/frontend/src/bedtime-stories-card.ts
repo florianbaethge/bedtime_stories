@@ -126,6 +126,15 @@ export class BedtimeStoriesCard extends LitElement {
   }
 
   public setConfig(config: BedtimeStoriesCardConfig): void {
+    if (!config || typeof config !== "object") {
+      throw new Error("Invalid configuration");
+    }
+    if (config.layout && config.layout !== "grid" && config.layout !== "list") {
+      throw new Error('layout must be "grid" or "list"');
+    }
+    if (config.player_mode === "fixed" && !config.media_player) {
+      throw new Error('player_mode "fixed" requires a media_player');
+    }
     this._config = { ...DEFAULT_CONFIG, ...config };
     this._localSort = this._loadLocalSort();
     this._playHere = this._loadPlayHere();

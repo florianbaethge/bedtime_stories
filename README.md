@@ -20,15 +20,53 @@ of maintaining dozens of YAML cards, you manage categories and stories in a
 graphical editor, and get play statistics, sorting and a switchable playback
 target on top.
 
+## Screenshots
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/florianbaethge/bedtime_stories/main/screenshots/card_grid.png"
+    alt="Grid layout — cover tiles grouped by category"
+    width="460"
+  >
+</p>
+
+<p align="center"><em>Grid layout — big, tappable cover tiles grouped by category.</em></p>
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/florianbaethge/bedtime_stories/main/screenshots/card_stats.png"
+    alt="Play statistics and in-card sort chips"
+    width="460"
+  >
+  <img
+    src="https://raw.githubusercontent.com/florianbaethge/bedtime_stories/main/screenshots/card_list.png"
+    alt="Compact list layout with playback controls"
+    width="460"
+  >
+</p>
+
+<p align="center"><em>Play statistics with sort chips (favorites first) · compact list layout with a playback target chip.</em></p>
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/florianbaethge/bedtime_stories/main/screenshots/card_editor.png"
+    alt="Bedtime Stories card editor with a live preview"
+    width="620"
+  >
+</p>
+
+<p align="center"><em>The graphical card editor — display options on the left, a live preview on the right.</em></p>
+
 ## Features
 
 - **Full-width dashboard card** with a graphical editor (no YAML required)
 - **Categories** shown as sub-headers with icons (e.g. "General",
   "Astrid Lindgren", "Fairy tales")
-- **Stories** with title, cover image (browse existing images or upload via
-  the media picker — same dialog as the audio file), duration badge (`~20m`)
-  and a media file picked from the media browser (local media upload works
-  there too) or any URL
+- **Stories** with title, cover image (browse the media library or upload
+  straight from the editor — uploaded covers are automatically resized and
+  cached, so the app never re-downloads full-size artwork), duration badge
+  (`~20m`) and a media file picked from the media browser (local media upload
+  works there too) or any URL
 - **Layout options**: grid with column count, or list with cozy/compact
   density, show/hide titles and duration
 - **Play statistics**: optional per-tile line ("played 12× · 2 days ago"),
@@ -101,19 +139,24 @@ YAML mode add `/bedtime_stories/bedtime-stories-card.js` as a module resource).
 
 ### Media files
 
-Both the audio and the cover image offer two ways to set a file:
+Both the audio and the cover image offer two ways to set a file — **browse**
+your Home Assistant media sources and pick an existing file, or **upload** a new
+one straight from the editor with the *Upload* button — but they store uploads
+differently:
 
-- **Browse** your Home Assistant media sources (the media picker) and pick an
-  existing file, or
-- **Upload** a new file straight from the editor with the *Upload* button — it
-  lands in *My media* (`/media`), the same folder a Samba/SMB share exposes, so
-  you don't need to leave Home Assistant to add stories or cover art.
+- **Audio** lands in *My media* (`/media`), the same folder a Samba/SMB share
+  exposes, so you don't need to leave Home Assistant to add stories. Uploading
+  needs a writable local media source (the default *My media*); if none is found
+  the editor says so and you can still upload via *Settings → Media* or a share.
+- **Cover art** is downscaled in the browser and stored in Home Assistant's
+  built-in image store, then served resized and cached from a stable
+  `/api/image/serve/<id>/512x512` URL. That means the companion app loads covers
+  from cache instead of re-downloading a multi-megabyte screenshot on every
+  open. If the image store isn't reachable, the upload falls back to *My media*.
 
-Uploading needs a writable local media source (the default *My media*); if none
-is found the editor says so and you can still upload via *Settings → Media* or a
-share. Existing `media-source://media_source/local/...` IDs can be pasted into
-the *Media URL / content id* field as-is, and cover URLs like
-`/api/image/serve/<id>/512x512` still work in the cover's *Advanced* URL field.
+Existing `media-source://media_source/local/...` IDs can be pasted into the
+*Media URL / content id* field as-is, and any `/api/image/serve/...` path or
+image URL works in the cover's *Advanced* URL field.
 
 ## Card options
 

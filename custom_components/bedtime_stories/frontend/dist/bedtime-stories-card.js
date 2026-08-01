@@ -1,1223 +1,42 @@
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-};
-
-/**
- * @license
- * Copyright 2019 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const t$3=globalThis,e$6=t$3.ShadowRoot&&(void 0===t$3.ShadyCSS||t$3.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,s$2=Symbol(),o$5=new WeakMap;let n$4 = class n{constructor(t,e,o){if(this._$cssResult$=true,o!==s$2)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e;}get styleSheet(){let t=this.o;const s=this.t;if(e$6&&void 0===t){const e=void 0!==s&&1===s.length;e&&(t=o$5.get(s)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&o$5.set(s,t));}return t}toString(){return this.cssText}};const r$4=t=>new n$4("string"==typeof t?t:t+"",void 0,s$2),i$5=(t,...e)=>{const o=1===t.length?t[0]:e.reduce((e,s,o)=>e+(t=>{if(true===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(s)+t[o+1],t[0]);return new n$4(o,t,s$2)},S$1=(s,o)=>{if(e$6)s.adoptedStyleSheets=o.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of o){const o=document.createElement("style"),n=t$3.litNonce;void 0!==n&&o.setAttribute("nonce",n),o.textContent=e.cssText,s.appendChild(o);}},c$2=e$6?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const s of t.cssRules)e+=s.cssText;return r$4(e)})(t):t;
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const{is:i$4,defineProperty:e$5,getOwnPropertyDescriptor:h$1,getOwnPropertyNames:r$3,getOwnPropertySymbols:o$4,getPrototypeOf:n$3}=Object,a$1=globalThis,c$1=a$1.trustedTypes,l$1=c$1?c$1.emptyScript:"",p$1=a$1.reactiveElementPolyfillSupport,d$1=(t,s)=>t,u$1={toAttribute(t,s){switch(s){case Boolean:t=t?l$1:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t);}return t},fromAttribute(t,s){let i=t;switch(s){case Boolean:i=null!==t;break;case Number:i=null===t?null:Number(t);break;case Object:case Array:try{i=JSON.parse(t);}catch(t){i=null;}}return i}},f$1=(t,s)=>!i$4(t,s),b$1={attribute:true,type:String,converter:u$1,reflect:false,useDefault:false,hasChanged:f$1};Symbol.metadata??=Symbol("metadata"),a$1.litPropertyMetadata??=new WeakMap;let y$1 = class y extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t);}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,s=b$1){if(s.state&&(s.attribute=false),this._$Ei(),this.prototype.hasOwnProperty(t)&&((s=Object.create(s)).wrapped=true),this.elementProperties.set(t,s),!s.noAccessor){const i=Symbol(),h=this.getPropertyDescriptor(t,i,s);void 0!==h&&e$5(this.prototype,t,h);}}static getPropertyDescriptor(t,s,i){const{get:e,set:r}=h$1(this.prototype,t)??{get(){return this[s]},set(t){this[s]=t;}};return {get:e,set(s){const h=e?.call(this);r?.call(this,s),this.requestUpdate(t,h,i);},configurable:true,enumerable:true}}static getPropertyOptions(t){return this.elementProperties.get(t)??b$1}static _$Ei(){if(this.hasOwnProperty(d$1("elementProperties")))return;const t=n$3(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties);}static finalize(){if(this.hasOwnProperty(d$1("finalized")))return;if(this.finalized=true,this._$Ei(),this.hasOwnProperty(d$1("properties"))){const t=this.properties,s=[...r$3(t),...o$4(t)];for(const i of s)this.createProperty(i,t[i]);}const t=this[Symbol.metadata];if(null!==t){const s=litPropertyMetadata.get(t);if(void 0!==s)for(const[t,i]of s)this.elementProperties.set(t,i);}this._$Eh=new Map;for(const[t,s]of this.elementProperties){const i=this._$Eu(t,s);void 0!==i&&this._$Eh.set(i,t);}this.elementStyles=this.finalizeStyles(this.styles);}static finalizeStyles(s){const i=[];if(Array.isArray(s)){const e=new Set(s.flat(1/0).reverse());for(const s of e)i.unshift(c$2(s));}else void 0!==s&&i.push(c$2(s));return i}static _$Eu(t,s){const i=s.attribute;return  false===i?void 0:"string"==typeof i?i:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=false,this.hasUpdated=false,this._$Em=null,this._$Ev();}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this));}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.();}removeController(t){this._$EO?.delete(t);}_$E_(){const t=new Map,s=this.constructor.elementProperties;for(const i of s.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t);}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return S$1(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(true),this._$EO?.forEach(t=>t.hostConnected?.());}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.());}attributeChangedCallback(t,s,i){this._$AK(t,i);}_$ET(t,s){const i=this.constructor.elementProperties.get(t),e=this.constructor._$Eu(t,i);if(void 0!==e&&true===i.reflect){const h=(void 0!==i.converter?.toAttribute?i.converter:u$1).toAttribute(s,i.type);this._$Em=t,null==h?this.removeAttribute(e):this.setAttribute(e,h),this._$Em=null;}}_$AK(t,s){const i=this.constructor,e=i._$Eh.get(t);if(void 0!==e&&this._$Em!==e){const t=i.getPropertyOptions(e),h="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:u$1;this._$Em=e;const r=h.fromAttribute(s,t.type);this[e]=r??this._$Ej?.get(e)??r,this._$Em=null;}}requestUpdate(t,s,i,e=false,h){if(void 0!==t){const r=this.constructor;if(false===e&&(h=this[t]),i??=r.getPropertyOptions(t),!((i.hasChanged??f$1)(h,s)||i.useDefault&&i.reflect&&h===this._$Ej?.get(t)&&!this.hasAttribute(r._$Eu(t,i))))return;this.C(t,s,i);} false===this.isUpdatePending&&(this._$ES=this._$EP());}C(t,s,{useDefault:i,reflect:e,wrapped:h},r){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,r??s??this[t]),true!==h||void 0!==r)||(this._$AL.has(t)||(this.hasUpdated||i||(s=void 0),this._$AL.set(t,s)),true===e&&this._$Em!==t&&(this._$Eq??=new Set).add(t));}async _$EP(){this.isUpdatePending=true;try{await this._$ES;}catch(t){Promise.reject(t);}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,s]of this._$Ep)this[t]=s;this._$Ep=void 0;}const t=this.constructor.elementProperties;if(t.size>0)for(const[s,i]of t){const{wrapped:t}=i,e=this[s];true!==t||this._$AL.has(s)||void 0===e||this.C(s,void 0,i,e);}}let t=false;const s=this._$AL;try{t=this.shouldUpdate(s),t?(this.willUpdate(s),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(s)):this._$EM();}catch(s){throw t=false,this._$EM(),s}t&&this._$AE(s);}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=true,this.firstUpdated(t)),this.updated(t);}_$EM(){this._$AL=new Map,this.isUpdatePending=false;}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return  true}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM();}updated(t){}firstUpdated(t){}};y$1.elementStyles=[],y$1.shadowRootOptions={mode:"open"},y$1[d$1("elementProperties")]=new Map,y$1[d$1("finalized")]=new Map,p$1?.({ReactiveElement:y$1}),(a$1.reactiveElementVersions??=[]).push("2.1.2");
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const t$2=globalThis,i$3=t=>t,s$1=t$2.trustedTypes,e$4=s$1?s$1.createPolicy("lit-html",{createHTML:t=>t}):void 0,h="$lit$",o$3=`lit$${Math.random().toFixed(9).slice(2)}$`,n$2="?"+o$3,r$2=`<${n$2}>`,l=document,c=()=>l.createComment(""),a=t=>null===t||"object"!=typeof t&&"function"!=typeof t,u=Array.isArray,d=t=>u(t)||"function"==typeof t?.[Symbol.iterator],f="[ \t\n\f\r]",v=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_=/-->/g,m=/>/g,p=RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),g=/'/g,$=/"/g,y=/^(?:script|style|textarea|title)$/i,x=t=>(i,...s)=>({_$litType$:t,strings:i,values:s}),b=x(1),E=Symbol.for("lit-noChange"),A=Symbol.for("lit-nothing"),C=new WeakMap,P=l.createTreeWalker(l,129);function V(t,i){if(!u(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==e$4?e$4.createHTML(i):i}const N=(t,i)=>{const s=t.length-1,e=[];let n,l=2===i?"<svg>":3===i?"<math>":"",c=v;for(let i=0;i<s;i++){const s=t[i];let a,u,d=-1,f=0;for(;f<s.length&&(c.lastIndex=f,u=c.exec(s),null!==u);)f=c.lastIndex,c===v?"!--"===u[1]?c=_:void 0!==u[1]?c=m:void 0!==u[2]?(y.test(u[2])&&(n=RegExp("</"+u[2],"g")),c=p):void 0!==u[3]&&(c=p):c===p?">"===u[0]?(c=n??v,d=-1):void 0===u[1]?d=-2:(d=c.lastIndex-u[2].length,a=u[1],c=void 0===u[3]?p:'"'===u[3]?$:g):c===$||c===g?c=p:c===_||c===m?c=v:(c=p,n=void 0);const x=c===p&&t[i+1].startsWith("/>")?" ":"";l+=c===v?s+r$2:d>=0?(e.push(a),s.slice(0,d)+h+s.slice(d)+o$3+x):s+o$3+(-2===d?i:x);}return [V(t,l+(t[s]||"<?>")+(2===i?"</svg>":3===i?"</math>":"")),e]};class S{constructor({strings:t,_$litType$:i},e){let r;this.parts=[];let l=0,a=0;const u=t.length-1,d=this.parts,[f,v]=N(t,i);if(this.el=S.createElement(f,e),P.currentNode=this.el.content,2===i||3===i){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes);}for(;null!==(r=P.nextNode())&&d.length<u;){if(1===r.nodeType){if(r.hasAttributes())for(const t of r.getAttributeNames())if(t.endsWith(h)){const i=v[a++],s=r.getAttribute(t).split(o$3),e=/([.?@])?(.*)/.exec(i);d.push({type:1,index:l,name:e[2],strings:s,ctor:"."===e[1]?I:"?"===e[1]?L:"@"===e[1]?z:H}),r.removeAttribute(t);}else t.startsWith(o$3)&&(d.push({type:6,index:l}),r.removeAttribute(t));if(y.test(r.tagName)){const t=r.textContent.split(o$3),i=t.length-1;if(i>0){r.textContent=s$1?s$1.emptyScript:"";for(let s=0;s<i;s++)r.append(t[s],c()),P.nextNode(),d.push({type:2,index:++l});r.append(t[i],c());}}}else if(8===r.nodeType)if(r.data===n$2)d.push({type:2,index:l});else {let t=-1;for(;-1!==(t=r.data.indexOf(o$3,t+1));)d.push({type:7,index:l}),t+=o$3.length-1;}l++;}}static createElement(t,i){const s=l.createElement("template");return s.innerHTML=t,s}}function M(t,i,s=t,e){if(i===E)return i;let h=void 0!==e?s._$Co?.[e]:s._$Cl;const o=a(i)?void 0:i._$litDirective$;return h?.constructor!==o&&(h?._$AO?.(false),void 0===o?h=void 0:(h=new o(t),h._$AT(t,s,e)),void 0!==e?(s._$Co??=[])[e]=h:s._$Cl=h),void 0!==h&&(i=M(t,h._$AS(t,i.values),h,e)),i}class R{constructor(t,i){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=i;}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:i},parts:s}=this._$AD,e=(t?.creationScope??l).importNode(i,true);P.currentNode=e;let h=P.nextNode(),o=0,n=0,r=s[0];for(;void 0!==r;){if(o===r.index){let i;2===r.type?i=new k(h,h.nextSibling,this,t):1===r.type?i=new r.ctor(h,r.name,r.strings,this,t):6===r.type&&(i=new Z(h,this,t)),this._$AV.push(i),r=s[++n];}o!==r?.index&&(h=P.nextNode(),o++);}return P.currentNode=l,e}p(t){let i=0;for(const s of this._$AV) void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,i),i+=s.strings.length-2):s._$AI(t[i])),i++;}}class k{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,i,s,e){this.type=2,this._$AH=A,this._$AN=void 0,this._$AA=t,this._$AB=i,this._$AM=s,this.options=e,this._$Cv=e?.isConnected??true;}get parentNode(){let t=this._$AA.parentNode;const i=this._$AM;return void 0!==i&&11===t?.nodeType&&(t=i.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,i=this){t=M(this,t,i),a(t)?t===A||null==t||""===t?(this._$AH!==A&&this._$AR(),this._$AH=A):t!==this._$AH&&t!==E&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):d(t)?this.k(t):this._(t);}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t));}_(t){this._$AH!==A&&a(this._$AH)?this._$AA.nextSibling.data=t:this.T(l.createTextNode(t)),this._$AH=t;}$(t){const{values:i,_$litType$:s}=t,e="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=S.createElement(V(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===e)this._$AH.p(i);else {const t=new R(e,this),s=t.u(this.options);t.p(i),this.T(s),this._$AH=t;}}_$AC(t){let i=C.get(t.strings);return void 0===i&&C.set(t.strings,i=new S(t)),i}k(t){u(this._$AH)||(this._$AH=[],this._$AR());const i=this._$AH;let s,e=0;for(const h of t)e===i.length?i.push(s=new k(this.O(c()),this.O(c()),this,this.options)):s=i[e],s._$AI(h),e++;e<i.length&&(this._$AR(s&&s._$AB.nextSibling,e),i.length=e);}_$AR(t=this._$AA.nextSibling,s){for(this._$AP?.(false,true,s);t!==this._$AB;){const s=i$3(t).nextSibling;i$3(t).remove(),t=s;}}setConnected(t){ void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t));}}class H{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,i,s,e,h){this.type=1,this._$AH=A,this._$AN=void 0,this.element=t,this.name=i,this._$AM=e,this.options=h,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=A;}_$AI(t,i=this,s,e){const h=this.strings;let o=false;if(void 0===h)t=M(this,t,i,0),o=!a(t)||t!==this._$AH&&t!==E,o&&(this._$AH=t);else {const e=t;let n,r;for(t=h[0],n=0;n<h.length-1;n++)r=M(this,e[s+n],i,n),r===E&&(r=this._$AH[n]),o||=!a(r)||r!==this._$AH[n],r===A?t=A:t!==A&&(t+=(r??"")+h[n+1]),this._$AH[n]=r;}o&&!e&&this.j(t);}j(t){t===A?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"");}}class I extends H{constructor(){super(...arguments),this.type=3;}j(t){this.element[this.name]=t===A?void 0:t;}}class L extends H{constructor(){super(...arguments),this.type=4;}j(t){this.element.toggleAttribute(this.name,!!t&&t!==A);}}class z extends H{constructor(t,i,s,e,h){super(t,i,s,e,h),this.type=5;}_$AI(t,i=this){if((t=M(this,t,i,0)??A)===E)return;const s=this._$AH,e=t===A&&s!==A||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,h=t!==A&&(s===A||e);e&&this.element.removeEventListener(this.name,this,s),h&&this.element.addEventListener(this.name,this,t),this._$AH=t;}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t);}}class Z{constructor(t,i,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=i,this.options=s;}get _$AU(){return this._$AM._$AU}_$AI(t){M(this,t);}}const B=t$2.litHtmlPolyfillSupport;B?.(S,k),(t$2.litHtmlVersions??=[]).push("3.3.3");const D$1=(t,i,s)=>{const e=s?.renderBefore??i;let h=e._$litPart$;if(void 0===h){const t=s?.renderBefore??null;e._$litPart$=h=new k(i.insertBefore(c(),t),t,void 0,s??{});}return h._$AI(t),h};
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const s=globalThis;let i$2 = class i extends y$1{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0;}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const r=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=D$1(r,this.renderRoot,this.renderOptions);}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(true);}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(false);}render(){return E}};i$2._$litElement$=true,i$2["finalized"]=true,s.litElementHydrateSupport?.({LitElement:i$2});const o$2=s.litElementPolyfillSupport;o$2?.({LitElement:i$2});(s.litElementVersions??=[]).push("4.2.2");
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const t$1=t=>(e,o)=>{ void 0!==o?o.addInitializer(()=>{customElements.define(t,e);}):customElements.define(t,e);};
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const o$1={attribute:true,type:String,converter:u$1,reflect:false,hasChanged:f$1},r$1=(t=o$1,e,r)=>{const{kind:n,metadata:i}=r;let s=globalThis.litPropertyMetadata.get(i);if(void 0===s&&globalThis.litPropertyMetadata.set(i,s=new Map),"setter"===n&&((t=Object.create(t)).wrapped=true),s.set(r.name,t),"accessor"===n){const{name:o}=r;return {set(r){const n=e.get.call(this);e.set.call(this,r),this.requestUpdate(o,n,t,true,r);},init(e){return void 0!==e&&this.C(o,void 0,t,e),e}}}if("setter"===n){const{name:o}=r;return function(r){const n=this[o];e.call(this,r),this.requestUpdate(o,n,t,true,r);}}throw Error("Unsupported decorator location: "+n)};function n$1(t){return (e,o)=>"object"==typeof o?r$1(t,e,o):((t,e,o)=>{const r=e.hasOwnProperty(o);return e.constructor.createProperty(o,t),r?Object.getOwnPropertyDescriptor(e,o):void 0})(t,e,o)}
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */function r(r){return n$1({...r,state:true,attribute:false})}
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const e$3=(e,t,c)=>(c.configurable=true,c.enumerable=true,Reflect.decorate&&"object"!=typeof t&&Object.defineProperty(e,t,c),c);
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */function e$2(e,r){return (n,s,i)=>{const o=t=>t.renderRoot?.querySelector(e)??null;return e$3(n,s,{get(){return o(this)}})}}
-
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const t={ATTRIBUTE:1},e$1=t=>(...e)=>({_$litDirective$:t,values:e});let i$1 = class i{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i;}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}};
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const e=e$1(class extends i$1{constructor(t$1){if(super(t$1),t$1.type!==t.ATTRIBUTE||"class"!==t$1.name||t$1.strings?.length>2)throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.")}render(t){return " "+Object.keys(t).filter(s=>t[s]).join(" ")+" "}update(s,[i]){if(void 0===this.st){this.st=new Set,void 0!==s.strings&&(this.nt=new Set(s.strings.join(" ").split(/\s/).filter(t=>""!==t)));for(const t in i)i[t]&&!this.nt?.has(t)&&this.st.add(t);return this.render(i)}const r=s.element.classList;for(const t of this.st)t in i||(r.remove(t),this.st.delete(t));for(const t in i){const s=!!i[t];s===this.st.has(t)||this.nt?.has(t)||(s?(r.add(t),this.st.add(t)):(r.remove(t),this.st.delete(t)));}return E}});
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const n="important",i=" !"+n,o=e$1(class extends i$1{constructor(t$1){if(super(t$1),t$1.type!==t.ATTRIBUTE||"style"!==t$1.name||t$1.strings?.length>2)throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.")}render(t){return Object.keys(t).reduce((e,r)=>{const s=t[r];return null==s?e:e+`${r=r.includes("-")?r:r.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g,"-$&").toLowerCase()}:${s};`},"")}update(e,[r]){const{style:s}=e.element;if(void 0===this.ft)return this.ft=new Set(Object.keys(r)),this.render(r);for(const t of this.ft)null==r[t]&&(this.ft.delete(t),t.includes("-")?s.removeProperty(t):s[t]=null);for(const t in r){const e=r[t];if(null!=e){this.ft.add(t);const r="string"==typeof e&&e.endsWith(i);t.includes("-")||r?s.setProperty(t,r?e.slice(0,-11):e,r?n:""):s[t]=e;}}return E}});
-
-const D = "bedtime_stories";
-function withEntry(msg, entryId) {
-    return entryId ? { ...msg, entry_id: entryId } : msg;
-}
-const listEntries = (hass) => hass.callWS({ type: `${D}/entries/list` });
-/** Resolve a `media-source://…` id to a directly usable (signed) URL. */
-const resolveMediaSource = (hass, mediaContentId) => hass.callWS({
-    type: "media_source/resolve_media",
-    media_content_id: mediaContentId,
-});
-const subscribeLibrary = (hass, callback, entryId) => hass.connection.subscribeMessage(callback, withEntry({ type: `${D}/subscribe` }, entryId));
-const playStory = (hass, storyId, mediaPlayer, entryId) => hass.callWS(withEntry({
-    type: `${D}/play`,
-    story_id: storyId,
-    ...(mediaPlayer ? { media_player: mediaPlayer } : {}),
-}, entryId));
-/** Record a "this device" playback (audio plays in the browser, not cast). */
-const recordPlay = (hass, storyId, source, entryId) => hass.callWS(withEntry({ type: `${D}/play`, story_id: storyId, record_only: true, source }, entryId));
-const saveCategory = (hass, category, entryId) => hass.callWS(withEntry({ type: `${D}/category/save`, category }, entryId));
-const deleteCategory = (hass, categoryId, entryId) => hass.callWS(withEntry({ type: `${D}/category/delete`, category_id: categoryId }, entryId));
-const reorderCategories = (hass, categoryIds, entryId) => hass.callWS(withEntry({ type: `${D}/category/reorder`, category_ids: categoryIds }, entryId));
-const reorderStories = (hass, storyIds, entryId) => hass.callWS(withEntry({ type: `${D}/story/reorder`, story_ids: storyIds }, entryId));
-const saveStory = (hass, story, entryId) => hass.callWS(withEntry({ type: `${D}/story/save`, story }, entryId));
-const deleteStory = (hass, storyId, entryId) => hass.callWS(withEntry({ type: `${D}/story/delete`, story_id: storyId }, entryId));
-const resetStats = (hass, storyId, entryId) => hass.callWS(withEntry({ type: `${D}/stats/reset`, ...(storyId ? { story_id: storyId } : {}) }, entryId));
-
-const TRANSLATIONS = {
-    en: {
-        empty: "No stories yet — add some in the card editor.",
-        no_player: "No player available",
-        this_device: "This device",
-        play_failed: "Playback failed",
-        sort_manual: "My order",
-        sort_alphabetical: "A–Z",
-        sort_play_count: "Favorites",
-        sort_last_played: "Recent",
-        played_never: "never played",
-        played_once: "played once",
-        played_times: "played {count}×",
-        playing: "Playing…",
-        pause: "Pause",
-        resume: "Resume",
-        now_playing: "Now playing",
-        // editor
-        tab_settings: "Settings",
-        tab_content: "Content",
-        section_appearance: "Appearance",
-        section_sorting: "Sorting & statistics",
-        section_playback: "Playback",
-        content_hint: "Categories group your stories and show up as sub-headers in the card. Edits to existing categories and stories save automatically and are shared by all Bedtime Stories cards — the card's own Save button below only applies to the display options.",
-        new_category: "New category",
-        edit_category: "Edit category",
-        new_story: "New story",
-        edit_story: "Edit story",
-        advanced: "Advanced",
-        media_selected: "Selected media",
-        media_none: "No media file selected yet",
-        media_help: "Browse your Home Assistant media, or upload a new audio file straight to “My media” with the button below.",
-        cover_selected: "Selected image",
-        cover_none: "No cover image selected yet",
-        cover_help: "Browse your Home Assistant media, or upload a picture straight to “My media” with the button below.",
-        or: "or",
-        upload_file: "Upload",
-        uploading: "Uploading…",
-        upload_failed: "Upload failed",
-        upload_no_media_source: "No writable media folder found. Upload via Settings → Media, or use a share.",
-        image_url: "Cover image URL / content id",
-        image_url_help: "Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",
-        duration_help: "Shown as a badge on the tile, e.g. “~20m”.",
-        media_content_id_help: "Direct media-source URI or stream URL — overrides the picked media.",
-        columns_help: "0 = automatic, based on the available width.",
-        no_categories: "No categories yet. Start by creating one — for example “General” or “Fairy tales”.",
-        title: "Title",
-        layout: "Layout",
-        layout_grid: "Grid",
-        layout_list: "List",
-        columns: "Columns (0 = automatic)",
-        density: "Density",
-        density_cozy: "Cozy",
-        density_compact: "Compact",
-        show_titles: "Show story titles",
-        show_duration: "Show duration badge",
-        show_stats: "Show play statistics",
-        sort: "Sort stories by",
-        sort_direction: "Sort direction",
-        asc: "Ascending",
-        desc: "Descending",
-        show_sort_selector: "Show sort chips in the card",
-        show_player: "Show player chip in the header",
-        show_device_toggle: "Show “This device” toggle",
-        show_device_toggle_help: "Adds a header chip to play the story right here in the browser or companion app, instead of casting to a media player.",
-        show_now_playing: "Show playback controls",
-        show_now_playing_help: "Shows a play/pause button and a progress bar above the stories for whatever is currently playing — on the selected media player or on this device.",
-        keep_awake: "Keep screen awake on this device",
-        keep_awake_help: "While a story plays on “This device”, requests a screen wake lock so the display doesn’t sleep and cut off playback. Only affects this-device playback.",
-        player_mode: "Playback target",
-        player_mode_select: "Player select entity (switchable)",
-        player_mode_fixed: "Fixed media player",
-        media_player: "Media player",
-        entry: "Library",
-        categories: "Categories",
-        add_category: "Add category",
-        add_story: "Add story",
-        edit: "Edit",
-        delete: "Delete",
-        save: "Save",
-        cancel: "Cancel",
-        done: "Done",
-        name: "Name",
-        icon: "Icon",
-        category: "Category",
-        duration: "Duration (minutes)",
-        cover: "Cover image",
-        media: "Media file",
-        media_hint: "Pick a file from the media browser (upload possible there) or paste a media-source URL / stream URL below.",
-        media_content_id: "Media URL / content id",
-        media_content_type: "Content type",
-        story_id_hint: "Story ID (for automations)",
-        stories_count: "{count} stories",
-        confirm_delete_category: "Delete this category and all of its stories?",
-        confirm_delete_story: "Delete this story?",
-        not_configured: "Bedtime Stories integration is not set up yet. Add it under Settings → Devices & services.",
-        reset_stats: "Reset statistics",
-        confirm_reset_stats: "Reset play statistics for this story?",
-        drag_reorder: "Drag to reorder",
-    },
-    de: {
-        empty: "Noch keine Geschichten – füge welche im Karten-Editor hinzu.",
-        no_player: "Kein Player verfügbar",
-        this_device: "Dieses Gerät",
-        play_failed: "Wiedergabe fehlgeschlagen",
-        sort_manual: "Meine Reihenfolge",
-        sort_alphabetical: "A–Z",
-        sort_play_count: "Lieblinge",
-        sort_last_played: "Zuletzt",
-        played_never: "noch nie gehört",
-        played_once: "1× gehört",
-        played_times: "{count}× gehört",
-        playing: "Läuft…",
-        pause: "Pause",
-        resume: "Fortsetzen",
-        now_playing: "Wird abgespielt",
-        tab_settings: "Einstellungen",
-        tab_content: "Inhalte",
-        section_appearance: "Darstellung",
-        section_sorting: "Sortierung & Statistik",
-        section_playback: "Wiedergabe",
-        content_hint: "Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen an bestehenden Kategorien und Geschichten werden automatisch gespeichert und gelten für alle Bedtime-Stories-Karten — die Save-Schaltfläche der Karte selbst betrifft nur die Darstellungsoptionen.",
-        new_category: "Neue Kategorie",
-        edit_category: "Kategorie bearbeiten",
-        new_story: "Neue Geschichte",
-        edit_story: "Geschichte bearbeiten",
-        advanced: "Erweitert",
-        media_selected: "Ausgewählte Medien",
-        media_none: "Noch keine Mediendatei ausgewählt",
-        media_help: "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten eine neue Audiodatei direkt in „Meine Medien“ hoch.",
-        cover_selected: "Ausgewähltes Bild",
-        cover_none: "Noch kein Cover-Bild ausgewählt",
-        cover_help: "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild direkt in „Meine Medien“ hoch.",
-        or: "oder",
-        upload_file: "Hochladen",
-        uploading: "Wird hochgeladen…",
-        upload_failed: "Upload fehlgeschlagen",
-        upload_no_media_source: "Kein beschreibbarer Medienordner gefunden. Lade über Einstellungen → Medien hoch oder nutze eine Freigabe.",
-        image_url: "Cover-Bild-URL / Content-ID",
-        image_url_help: "Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",
-        duration_help: "Wird als Badge auf der Kachel angezeigt, z. B. „~20m“.",
-        media_content_id_help: "Direkte media-source-URI oder Stream-URL — übersteuert die ausgewählte Datei.",
-        columns_help: "0 = automatisch, passend zur verfügbaren Breite.",
-        no_categories: "Noch keine Kategorien. Leg zuerst eine an — zum Beispiel „Allgemein“ oder „Märchen“.",
-        title: "Titel",
-        layout: "Darstellung",
-        layout_grid: "Raster",
-        layout_list: "Liste",
-        columns: "Spalten (0 = automatisch)",
-        density: "Dichte",
-        density_cozy: "Gemütlich",
-        density_compact: "Kompakt",
-        show_titles: "Titel der Geschichten anzeigen",
-        show_duration: "Dauer-Badge anzeigen",
-        show_stats: "Hörstatistik anzeigen",
-        sort: "Geschichten sortieren nach",
-        sort_direction: "Sortierrichtung",
-        asc: "Aufsteigend",
-        desc: "Absteigend",
-        show_sort_selector: "Sortier-Chips in der Karte anzeigen",
-        show_player: "Player-Chip im Kopf anzeigen",
-        show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
-        show_device_toggle_help: "Fügt oben einen Chip hinzu, um die Geschichte direkt hier im Browser oder in der Companion-App abzuspielen statt auf einen Mediaplayer zu casten.",
-        show_now_playing: "Wiedergabesteuerung anzeigen",
-        show_now_playing_help: "Zeigt über den Geschichten einen Play/Pause-Knopf und einen Fortschrittsbalken für das, was gerade läuft — auf dem gewählten Mediaplayer oder auf diesem Gerät.",
-        keep_awake: "Bildschirm auf diesem Gerät wachhalten",
-        keep_awake_help: "Während eine Geschichte auf „Dieses Gerät“ läuft, wird ein Wake-Lock angefordert, damit der Bildschirm nicht in den Ruhezustand geht und die Wiedergabe abbricht. Betrifft nur die Wiedergabe auf diesem Gerät.",
-        player_mode: "Wiedergabeziel",
-        player_mode_select: "Player-Auswahl-Entität (umschaltbar)",
-        player_mode_fixed: "Fester Medienplayer",
-        media_player: "Medienplayer",
-        entry: "Bibliothek",
-        categories: "Kategorien",
-        add_category: "Kategorie hinzufügen",
-        add_story: "Geschichte hinzufügen",
-        edit: "Bearbeiten",
-        delete: "Löschen",
-        save: "Speichern",
-        cancel: "Abbrechen",
-        done: "Fertig",
-        name: "Name",
-        icon: "Icon",
-        category: "Kategorie",
-        duration: "Dauer (Minuten)",
-        cover: "Cover-Bild",
-        media: "Mediendatei",
-        media_hint: "Wähle eine Datei aus dem Medienbrowser (Upload dort möglich) oder trage unten eine media-source-URL / Stream-URL ein.",
-        media_content_id: "Medien-URL / Content-ID",
-        media_content_type: "Content-Type",
-        story_id_hint: "Geschichten-ID (für Automationen)",
-        stories_count: "{count} Geschichten",
-        confirm_delete_category: "Diese Kategorie samt aller Geschichten löschen?",
-        confirm_delete_story: "Diese Geschichte löschen?",
-        not_configured: "Die Bedtime-Stories-Integration ist noch nicht eingerichtet. Füge sie unter Einstellungen → Geräte & Dienste hinzu.",
-        reset_stats: "Statistik zurücksetzen",
-        confirm_reset_stats: "Hörstatistik dieser Geschichte zurücksetzen?",
-        drag_reorder: "Zum Sortieren ziehen",
-    },
-};
-function localize(hass, key, vars) {
-    const lang = (hass?.locale?.language ?? hass?.language ?? "en").split("-")[0];
-    const table = TRANSLATIONS[lang] ?? TRANSLATIONS.en;
-    let text = table[key] ?? TRANSLATIONS.en[key] ?? key;
-    if (vars) {
-        for (const [name, value] of Object.entries(vars)) {
-            text = text.replace(`{${name}}`, String(value));
-        }
-    }
-    return text;
-}
-/** "vor 2 Tagen" / "2 days ago" via Intl, falling back to the raw date. */
-function relativeTime(hass, iso) {
-    const lang = hass?.locale?.language ?? hass?.language ?? "en";
-    const then = new Date(iso).getTime();
-    if (Number.isNaN(then))
-        return iso;
-    const diffSec = Math.round((then - Date.now()) / 1000);
-    const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
-    const table = [
-        ["year", 60 * 60 * 24 * 365],
-        ["month", 60 * 60 * 24 * 30],
-        ["week", 60 * 60 * 24 * 7],
-        ["day", 60 * 60 * 24],
-        ["hour", 60 * 60],
-        ["minute", 60],
-    ];
-    for (const [unit, seconds] of table) {
-        if (Math.abs(diffSec) >= seconds) {
-            return rtf.format(Math.round(diffSec / seconds), unit);
-        }
-    }
-    return rtf.format(0, "minute");
-}
-
-/** Cover values that browse from the media library carry this scheme. */
-function isMediaSource(value) {
-    return typeof value === "string" && value.startsWith("media-source://");
-}
-// Resolved media-source URLs are signed and time-limited, so we cache them only
-// briefly — long enough to avoid a websocket round-trip per re-render, short
-// enough that a freshly created <img> never points at an expired signature.
-const TTL_MS = 4 * 60 * 1000;
-const cache = new Map();
-/**
- * Turn a stored cover value into something usable as an image URL: a
- * `media-source://…` id is resolved via the websocket API (and cached), while
- * plain URLs / `/api/image/serve/…` paths pass straight through.
- */
-async function resolveImage(hass, value) {
-    if (!value)
-        return null;
-    if (!isMediaSource(value))
-        return value;
-    const now = Date.now();
-    const hit = cache.get(value);
-    if (hit && now - hit.at < TTL_MS)
-        return hit.url;
-    try {
-        const { url } = await resolveMediaSource(hass, value);
-        cache.set(value, { url, at: now });
-        return url;
-    }
-    catch {
-        return null;
-    }
-}
-
-const DEFAULT_CONFIG = {
-    layout: "grid",
-    columns: 0, // 0 = automatic
-    density: "cozy",
-    show_titles: true,
-    show_duration: true,
-    show_stats: false,
-    sort: "manual",
-    sort_direction: "asc",
-    show_sort_selector: false,
-    show_player: true,
-    show_device_toggle: true,
-    show_now_playing: true,
-    keep_awake: true,
-    player_mode: "select",
-};
-
-function fireEvent(node, type, detail) {
-    const event = new CustomEvent(type, {
-        bubbles: true,
-        composed: true,
-        detail: detail ?? {},
-    });
-    node.dispatchEvent(event);
-}
-
-var BedtimeStoriesCardEditor_1;
-/** Force-load ha-form and friends (they ship with the entities card editor). */
-async function loadHaForm() {
-    if (customElements.get("ha-form"))
-        return;
-    try {
-        const helpers = await window.loadCardHelpers?.();
-        if (!helpers)
-            return;
-        const card = await helpers.createCardElement({
-            type: "entities",
-            entities: [],
-        });
-        await card.constructor.getConfigElement?.();
-    }
-    catch {
-        // ha-form is usually already defined inside the edit dialog
-    }
-}
-let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
-    constructor() {
-        super(...arguments);
-        this._entries = [];
-        /** story.id → resolved cover URL, for images stored as media-source ids. */
-        this._covers = {};
-        this._formReady = false;
-        this._categoryDraft = null;
-        this._storyDraft = null;
-        this._storyAdvanced = false;
-        this._savingContent = false;
-        this._computeLabel = (schema) => schema.name === "entry_id" ? this._l("entry") : this._l(schema.name);
-        this._computeHelper = (schema) => {
-            if (schema.name === "columns")
-                return this._l("columns_help");
-            if (schema.name === "show_device_toggle") {
-                return this._l("show_device_toggle_help");
-            }
-            if (schema.name === "show_now_playing") {
-                return this._l("show_now_playing_help");
-            }
-            if (schema.name === "keep_awake") {
-                return this._l("keep_awake_help");
-            }
-            return undefined;
-        };
-        /** The cover section has its own header, so the image selector stays unlabeled. */
-        this._noLabel = () => "";
-        this._dragEnd = () => {
-            this._dragKind = undefined;
-            this._dragId = undefined;
-            this._dragCategoryId = undefined;
-            this._dragOverId = undefined;
-        };
-    }
-    static { BedtimeStoriesCardEditor_1 = this; }
-    setConfig(config) {
-        this._config = { ...config };
-        this._connectLibrary();
-    }
-    connectedCallback() {
-        super.connectedCallback();
-        void loadHaForm().then(() => {
-            this._formReady = true;
-        });
-        this._connectLibrary();
-    }
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
-        this._unsubscribe = undefined;
-        this._subscribedEntry = undefined;
-        // Persist a still-pending edit if the dialog is closed mid-debounce.
-        if (this._contentTimer) {
-            clearTimeout(this._contentTimer);
-            this._contentTimer = undefined;
-            void this._autoSaveContent();
-        }
-    }
-    updated() {
-        if (this.hass && !this._unsubscribe) {
-            this._connectLibrary();
-        }
-    }
-    _connectLibrary() {
-        if (!this.hass || !this.isConnected)
-            return;
-        const entry = this._config?.entry_id ?? "";
-        if (this._unsubscribe && this._subscribedEntry === entry)
-            return;
-        this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
-        this._subscribedEntry = entry;
-        void listEntries(this.hass).then((entries) => {
-            this._entries = entries;
-        });
-        this._unsubscribe = subscribeLibrary(this.hass, (snapshot) => {
-            this._library = snapshot;
-            this._error = undefined;
-            void this._resolveCovers(snapshot);
-        }, this._config?.entry_id || undefined);
-        this._unsubscribe.catch(() => {
-            this._unsubscribe = undefined;
-            this._library = undefined;
-        });
-    }
-    _l(key, vars) {
-        return localize(this.hass, key, vars);
-    }
-    /** Resolve any media-source cover ids into displayable thumbnail URLs. */
-    async _resolveCovers(lib) {
-        if (!this.hass)
-            return;
-        const updates = {};
-        await Promise.all(lib.stories.map(async (story) => {
-            if (!isMediaSource(story.image))
-                return;
-            const url = await resolveImage(this.hass, story.image);
-            if (url && url !== this._covers[story.id])
-                updates[story.id] = url;
-        }));
-        if (Object.keys(updates).length) {
-            this._covers = { ...this._covers, ...updates };
-        }
-    }
-    /** Direct URLs pass through; media-source ids use the resolved cache. */
-    _storyThumb(story) {
-        if (!story.image)
-            return null;
-        if (isMediaSource(story.image))
-            return this._covers[story.id] ?? null;
-        return story.image;
-    }
-    // ---- settings forms ------------------------------------------------------
-    _basicsSchema() {
-        const schema = [];
-        if (this._entries.length > 1) {
-            schema.push({
-                name: "entry_id",
-                selector: {
-                    select: {
-                        mode: "dropdown",
-                        options: this._entries.map((e) => ({
-                            value: e.entry_id,
-                            label: e.name,
-                        })),
-                    },
-                },
-            });
-        }
-        schema.push({ name: "title", selector: { text: {} } });
-        return schema;
-    }
-    _appearanceSchema() {
-        const config = { ...DEFAULT_CONFIG, ...this._config };
-        const layoutRow = [
-            {
-                name: "layout",
-                selector: {
-                    select: {
-                        mode: "dropdown",
-                        options: [
-                            { value: "grid", label: this._l("layout_grid") },
-                            { value: "list", label: this._l("layout_list") },
-                        ],
-                    },
-                },
-            },
-        ];
-        if (config.layout === "list") {
-            // Grid tiles scale via the column count; density only helps list rows.
-            layoutRow.push({
-                name: "density",
-                selector: {
-                    select: {
-                        mode: "dropdown",
-                        options: [
-                            { value: "cozy", label: this._l("density_cozy") },
-                            { value: "compact", label: this._l("density_compact") },
-                        ],
-                    },
-                },
-            });
-        }
-        else {
-            layoutRow.push({
-                name: "columns",
-                selector: { number: { min: 0, max: 8, mode: "box" } },
-            });
-        }
-        return [
-            { name: "", type: "grid", schema: layoutRow },
-            {
-                name: "",
-                type: "grid",
-                schema: [
-                    { name: "show_titles", selector: { boolean: {} } },
-                    { name: "show_duration", selector: { boolean: {} } },
-                ],
-            },
-        ];
-    }
-    _sortingSchema() {
-        return [
-            {
-                name: "",
-                type: "grid",
-                schema: [
-                    {
-                        name: "sort",
-                        selector: {
-                            select: {
-                                mode: "dropdown",
-                                options: [
-                                    { value: "manual", label: this._l("sort_manual") },
-                                    { value: "alphabetical", label: this._l("sort_alphabetical") },
-                                    { value: "play_count", label: this._l("sort_play_count") },
-                                    { value: "last_played", label: this._l("sort_last_played") },
-                                ],
-                            },
-                        },
-                    },
-                    {
-                        name: "sort_direction",
-                        selector: {
-                            select: {
-                                mode: "dropdown",
-                                options: [
-                                    { value: "asc", label: this._l("asc") },
-                                    { value: "desc", label: this._l("desc") },
-                                ],
-                            },
-                        },
-                    },
-                ],
-            },
-            {
-                name: "",
-                type: "grid",
-                schema: [
-                    { name: "show_sort_selector", selector: { boolean: {} } },
-                    { name: "show_stats", selector: { boolean: {} } },
-                ],
-            },
-        ];
-    }
-    _playbackSchema() {
-        const config = { ...DEFAULT_CONFIG, ...this._config };
-        const schema = [
-            {
-                name: "player_mode",
-                selector: {
-                    select: {
-                        mode: "dropdown",
-                        options: [
-                            { value: "select", label: this._l("player_mode_select") },
-                            { value: "fixed", label: this._l("player_mode_fixed") },
-                        ],
-                    },
-                },
-            },
-        ];
-        if (config.player_mode === "fixed") {
-            schema.push({
-                name: "media_player",
-                selector: { entity: { domain: "media_player" } },
-            });
-        }
-        else {
-            schema.push({ name: "show_player", selector: { boolean: {} } });
-        }
-        schema.push({ name: "show_device_toggle", selector: { boolean: {} } });
-        schema.push({ name: "show_now_playing", selector: { boolean: {} } });
-        schema.push({ name: "keep_awake", selector: { boolean: {} } });
-        return schema;
-    }
-    _settingsChanged(ev) {
-        ev.stopPropagation();
-        const value = ev.detail.value;
-        this._config = {
-            ...this._config,
-            ...value,
-            type: "custom:bedtime-stories-card",
-        };
-        fireEvent(this, "config-changed", { config: this._config });
-        this._connectLibrary();
-    }
-    _renderSettingsForm(schema) {
-        return b `
+function e(e,t,i,s){var r,o=arguments.length,a=o<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var n=e.length-1;n>=0;n--)(r=e[n])&&(a=(o<3?r(a):o>3?r(t,i,a):r(t,i))||a);return o>3&&a&&Object.defineProperty(t,i,a),a}"function"==typeof SuppressedError&&SuppressedError;const t=globalThis,i=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,s=Symbol(),r=new WeakMap;let o=class{constructor(e,t,i){if(this._$cssResult$=!0,i!==s)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=e,this.t=t}get styleSheet(){let e=this.o;const t=this.t;if(i&&void 0===e){const i=void 0!==t&&1===t.length;i&&(e=r.get(t)),void 0===e&&((this.o=e=new CSSStyleSheet).replaceSync(this.cssText),i&&r.set(t,e))}return e}toString(){return this.cssText}};const a=(e,...t)=>{const i=1===e.length?e[0]:t.reduce((t,i,s)=>t+(e=>{if(!0===e._$cssResult$)return e.cssText;if("number"==typeof e)return e;throw Error("Value passed to 'css' function must be a 'css' function result: "+e+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(i)+e[s+1],e[0]);return new o(i,e,s)},n=i?e=>e:e=>e instanceof CSSStyleSheet?(e=>{let t="";for(const i of e.cssRules)t+=i.cssText;return(e=>new o("string"==typeof e?e:e+"",void 0,s))(t)})(e):e,{is:c,defineProperty:l,getOwnPropertyDescriptor:d,getOwnPropertyNames:h,getOwnPropertySymbols:p,getPrototypeOf:_}=Object,u=globalThis,m=u.trustedTypes,y=m?m.emptyScript:"",g=u.reactiveElementPolyfillSupport,f=(e,t)=>e,v={toAttribute(e,t){switch(t){case Boolean:e=e?y:null;break;case Object:case Array:e=null==e?e:JSON.stringify(e)}return e},fromAttribute(e,t){let i=e;switch(t){case Boolean:i=null!==e;break;case Number:i=null===e?null:Number(e);break;case Object:case Array:try{i=JSON.parse(e)}catch(e){i=null}}return i}},b=(e,t)=>!c(e,t),$={attribute:!0,type:String,converter:v,reflect:!1,useDefault:!1,hasChanged:b};Symbol.metadata??=Symbol("metadata"),u.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(e){this._$Ei(),(this.l??=[]).push(e)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(e,t=$){if(t.state&&(t.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(e)&&((t=Object.create(t)).wrapped=!0),this.elementProperties.set(e,t),!t.noAccessor){const i=Symbol(),s=this.getPropertyDescriptor(e,i,t);void 0!==s&&l(this.prototype,e,s)}}static getPropertyDescriptor(e,t,i){const{get:s,set:r}=d(this.prototype,e)??{get(){return this[t]},set(e){this[t]=e}};return{get:s,set(t){const o=s?.call(this);r?.call(this,t),this.requestUpdate(e,o,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(e){return this.elementProperties.get(e)??$}static _$Ei(){if(this.hasOwnProperty(f("elementProperties")))return;const e=_(this);e.finalize(),void 0!==e.l&&(this.l=[...e.l]),this.elementProperties=new Map(e.elementProperties)}static finalize(){if(this.hasOwnProperty(f("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(f("properties"))){const e=this.properties,t=[...h(e),...p(e)];for(const i of t)this.createProperty(i,e[i])}const e=this[Symbol.metadata];if(null!==e){const t=litPropertyMetadata.get(e);if(void 0!==t)for(const[e,i]of t)this.elementProperties.set(e,i)}this._$Eh=new Map;for(const[e,t]of this.elementProperties){const i=this._$Eu(e,t);void 0!==i&&this._$Eh.set(i,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(e){const t=[];if(Array.isArray(e)){const i=new Set(e.flat(1/0).reverse());for(const e of i)t.unshift(n(e))}else void 0!==e&&t.push(n(e));return t}static _$Eu(e,t){const i=t.attribute;return!1===i?void 0:"string"==typeof i?i:"string"==typeof e?e.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(e=>this.enableUpdating=e),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(e=>e(this))}addController(e){(this._$EO??=new Set).add(e),void 0!==this.renderRoot&&this.isConnected&&e.hostConnected?.()}removeController(e){this._$EO?.delete(e)}_$E_(){const e=new Map,t=this.constructor.elementProperties;for(const i of t.keys())this.hasOwnProperty(i)&&(e.set(i,this[i]),delete this[i]);e.size>0&&(this._$Ep=e)}createRenderRoot(){const e=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return((e,s)=>{if(i)e.adoptedStyleSheets=s.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const i of s){const s=document.createElement("style"),r=t.litNonce;void 0!==r&&s.setAttribute("nonce",r),s.textContent=i.cssText,e.appendChild(s)}})(e,this.constructor.elementStyles),e}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(e=>e.hostConnected?.())}enableUpdating(e){}disconnectedCallback(){this._$EO?.forEach(e=>e.hostDisconnected?.())}attributeChangedCallback(e,t,i){this._$AK(e,i)}_$ET(e,t){const i=this.constructor.elementProperties.get(e),s=this.constructor._$Eu(e,i);if(void 0!==s&&!0===i.reflect){const r=(void 0!==i.converter?.toAttribute?i.converter:v).toAttribute(t,i.type);this._$Em=e,null==r?this.removeAttribute(s):this.setAttribute(s,r),this._$Em=null}}_$AK(e,t){const i=this.constructor,s=i._$Eh.get(e);if(void 0!==s&&this._$Em!==s){const e=i.getPropertyOptions(s),r="function"==typeof e.converter?{fromAttribute:e.converter}:void 0!==e.converter?.fromAttribute?e.converter:v;this._$Em=s;const o=r.fromAttribute(t,e.type);this[s]=o??this._$Ej?.get(s)??o,this._$Em=null}}requestUpdate(e,t,i,s=!1,r){if(void 0!==e){const o=this.constructor;if(!1===s&&(r=this[e]),i??=o.getPropertyOptions(e),!((i.hasChanged??b)(r,t)||i.useDefault&&i.reflect&&r===this._$Ej?.get(e)&&!this.hasAttribute(o._$Eu(e,i))))return;this.C(e,t,i)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(e,t,{useDefault:i,reflect:s,wrapped:r},o){i&&!(this._$Ej??=new Map).has(e)&&(this._$Ej.set(e,o??t??this[e]),!0!==r||void 0!==o)||(this._$AL.has(e)||(this.hasUpdated||i||(t=void 0),this._$AL.set(e,t)),!0===s&&this._$Em!==e&&(this._$Eq??=new Set).add(e))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const e=this.scheduleUpdate();return null!=e&&await e,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[e,t]of this._$Ep)this[e]=t;this._$Ep=void 0}const e=this.constructor.elementProperties;if(e.size>0)for(const[t,i]of e){const{wrapped:e}=i,s=this[t];!0!==e||this._$AL.has(t)||void 0===s||this.C(t,void 0,i,s)}}let e=!1;const t=this._$AL;try{e=this.shouldUpdate(t),e?(this.willUpdate(t),this._$EO?.forEach(e=>e.hostUpdate?.()),this.update(t)):this._$EM()}catch(t){throw e=!1,this._$EM(),t}e&&this._$AE(t)}willUpdate(e){}_$AE(e){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(e)),this.updated(e)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(e){return!0}update(e){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(e){}firstUpdated(e){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[f("elementProperties")]=new Map,w[f("finalized")]=new Map,g?.({ReactiveElement:w}),(u.reactiveElementVersions??=[]).push("2.1.2");const x=globalThis,k=e=>e,S=x.trustedTypes,A=S?S.createPolicy("lit-html",{createHTML:e=>e}):void 0,C="$lit$",E=`lit$${Math.random().toFixed(9).slice(2)}$`,P="?"+E,D=`<${P}>`,z=document,T=()=>z.createComment(""),L=e=>null===e||"object"!=typeof e&&"function"!=typeof e,M=Array.isArray,I="[ \t\n\f\r]",R=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,U=/-->/g,O=/>/g,N=RegExp(`>|${I}(?:([^\\s"'>=/]+)(${I}*=${I}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),H=/'/g,j=/"/g,F=/^(?:script|style|textarea|title)$/i,W=(e=>(t,...i)=>({_$litType$:e,strings:t,values:i}))(1),B=Symbol.for("lit-noChange"),K=Symbol.for("lit-nothing"),G=new WeakMap,q=z.createTreeWalker(z,129);function V(e,t){if(!M(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==A?A.createHTML(t):t}const Z=(e,t)=>{const i=e.length-1,s=[];let r,o=2===t?"<svg>":3===t?"<math>":"",a=R;for(let t=0;t<i;t++){const i=e[t];let n,c,l=-1,d=0;for(;d<i.length&&(a.lastIndex=d,c=a.exec(i),null!==c);)d=a.lastIndex,a===R?"!--"===c[1]?a=U:void 0!==c[1]?a=O:void 0!==c[2]?(F.test(c[2])&&(r=RegExp("</"+c[2],"g")),a=N):void 0!==c[3]&&(a=N):a===N?">"===c[0]?(a=r??R,l=-1):void 0===c[1]?l=-2:(l=a.lastIndex-c[2].length,n=c[1],a=void 0===c[3]?N:'"'===c[3]?j:H):a===j||a===H?a=N:a===U||a===O?a=R:(a=N,r=void 0);const h=a===N&&e[t+1].startsWith("/>")?" ":"";o+=a===R?i+D:l>=0?(s.push(n),i.slice(0,l)+C+i.slice(l)+E+h):i+E+(-2===l?t:h)}return[V(e,o+(e[i]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),s]};class J{constructor({strings:e,_$litType$:t},i){let s;this.parts=[];let r=0,o=0;const a=e.length-1,n=this.parts,[c,l]=Z(e,t);if(this.el=J.createElement(c,i),q.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(s=q.nextNode())&&n.length<a;){if(1===s.nodeType){if(s.hasAttributes())for(const e of s.getAttributeNames())if(e.endsWith(C)){const t=l[o++],i=s.getAttribute(e).split(E),a=/([.?@])?(.*)/.exec(t);n.push({type:1,index:r,name:a[2],strings:i,ctor:"."===a[1]?te:"?"===a[1]?ie:"@"===a[1]?se:ee}),s.removeAttribute(e)}else e.startsWith(E)&&(n.push({type:6,index:r}),s.removeAttribute(e));if(F.test(s.tagName)){const e=s.textContent.split(E),t=e.length-1;if(t>0){s.textContent=S?S.emptyScript:"";for(let i=0;i<t;i++)s.append(e[i],T()),q.nextNode(),n.push({type:2,index:++r});s.append(e[t],T())}}}else if(8===s.nodeType)if(s.data===P)n.push({type:2,index:r});else{let e=-1;for(;-1!==(e=s.data.indexOf(E,e+1));)n.push({type:7,index:r}),e+=E.length-1}r++}}static createElement(e,t){const i=z.createElement("template");return i.innerHTML=e,i}}function X(e,t,i=e,s){if(t===B)return t;let r=void 0!==s?i._$Co?.[s]:i._$Cl;const o=L(t)?void 0:t._$litDirective$;return r?.constructor!==o&&(r?._$AO?.(!1),void 0===o?r=void 0:(r=new o(e),r._$AT(e,i,s)),void 0!==s?(i._$Co??=[])[s]=r:i._$Cl=r),void 0!==r&&(t=X(e,r._$AS(e,t.values),r,s)),t}class Y{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:i}=this._$AD,s=(e?.creationScope??z).importNode(t,!0);q.currentNode=s;let r=q.nextNode(),o=0,a=0,n=i[0];for(;void 0!==n;){if(o===n.index){let t;2===n.type?t=new Q(r,r.nextSibling,this,e):1===n.type?t=new n.ctor(r,n.name,n.strings,this,e):6===n.type&&(t=new re(r,this,e)),this._$AV.push(t),n=i[++a]}o!==n?.index&&(r=q.nextNode(),o++)}return q.currentNode=z,s}p(e){let t=0;for(const i of this._$AV)void 0!==i&&(void 0!==i.strings?(i._$AI(e,i,t),t+=i.strings.length-2):i._$AI(e[t])),t++}}class Q{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,i,s){this.type=2,this._$AH=K,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=i,this.options=s,this._$Cv=s?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=X(this,e,t),L(e)?e===K||null==e||""===e?(this._$AH!==K&&this._$AR(),this._$AH=K):e!==this._$AH&&e!==B&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>M(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==K&&L(this._$AH)?this._$AA.nextSibling.data=e:this.T(z.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:i}=e,s="number"==typeof i?this._$AC(e):(void 0===i.el&&(i.el=J.createElement(V(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===s)this._$AH.p(t);else{const e=new Y(s,this),i=e.u(this.options);e.p(t),this.T(i),this._$AH=e}}_$AC(e){let t=G.get(e.strings);return void 0===t&&G.set(e.strings,t=new J(e)),t}k(e){M(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let i,s=0;for(const r of e)s===t.length?t.push(i=new Q(this.O(T()),this.O(T()),this,this.options)):i=t[s],i._$AI(r),s++;s<t.length&&(this._$AR(i&&i._$AB.nextSibling,s),t.length=s)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=k(e).nextSibling;k(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class ee{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,i,s,r){this.type=1,this._$AH=K,this._$AN=void 0,this.element=e,this.name=t,this._$AM=s,this.options=r,i.length>2||""!==i[0]||""!==i[1]?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=K}_$AI(e,t=this,i,s){const r=this.strings;let o=!1;if(void 0===r)e=X(this,e,t,0),o=!L(e)||e!==this._$AH&&e!==B,o&&(this._$AH=e);else{const s=e;let a,n;for(e=r[0],a=0;a<r.length-1;a++)n=X(this,s[i+a],t,a),n===B&&(n=this._$AH[a]),o||=!L(n)||n!==this._$AH[a],n===K?e=K:e!==K&&(e+=(n??"")+r[a+1]),this._$AH[a]=n}o&&!s&&this.j(e)}j(e){e===K?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class te extends ee{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===K?void 0:e}}class ie extends ee{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==K)}}class se extends ee{constructor(e,t,i,s,r){super(e,t,i,s,r),this.type=5}_$AI(e,t=this){if((e=X(this,e,t,0)??K)===B)return;const i=this._$AH,s=e===K&&i!==K||e.capture!==i.capture||e.once!==i.once||e.passive!==i.passive,r=e!==K&&(i===K||s);s&&this.element.removeEventListener(this.name,this,i),r&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class re{constructor(e,t,i){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(e){X(this,e)}}const oe=x.litHtmlPolyfillSupport;oe?.(J,Q),(x.litHtmlVersions??=[]).push("3.3.3");const ae=globalThis;let ne=class extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,i)=>{const s=i?.renderBefore??t;let r=s._$litPart$;if(void 0===r){const e=i?.renderBefore??null;s._$litPart$=r=new Q(t.insertBefore(T(),e),e,void 0,i??{})}return r._$AI(e),r})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return B}};ne._$litElement$=!0,ne.finalized=!0,ae.litElementHydrateSupport?.({LitElement:ne});const ce=ae.litElementPolyfillSupport;ce?.({LitElement:ne}),(ae.litElementVersions??=[]).push("4.2.2");const le=e=>(t,i)=>{void 0!==i?i.addInitializer(()=>{customElements.define(e,t)}):customElements.define(e,t)},de={attribute:!0,type:String,converter:v,reflect:!1,hasChanged:b},he=(e=de,t,i)=>{const{kind:s,metadata:r}=i;let o=globalThis.litPropertyMetadata.get(r);if(void 0===o&&globalThis.litPropertyMetadata.set(r,o=new Map),"setter"===s&&((e=Object.create(e)).wrapped=!0),o.set(i.name,e),"accessor"===s){const{name:s}=i;return{set(i){const r=t.get.call(this);t.set.call(this,i),this.requestUpdate(s,r,e,!0,i)},init(t){return void 0!==t&&this.C(s,void 0,e,t),t}}}if("setter"===s){const{name:s}=i;return function(i){const r=this[s];t.call(this,i),this.requestUpdate(s,r,e,!0,i)}}throw Error("Unsupported decorator location: "+s)};function pe(e){return(t,i)=>"object"==typeof i?he(e,t,i):((e,t,i)=>{const s=t.hasOwnProperty(i);return t.constructor.createProperty(i,e),s?Object.getOwnPropertyDescriptor(t,i):void 0})(e,t,i)}function _e(e){return pe({...e,state:!0,attribute:!1})}const ue=1,me=e=>(...t)=>({_$litDirective$:e,values:t});let ye=class{constructor(e){}get _$AU(){return this._$AM._$AU}_$AT(e,t,i){this._$Ct=e,this._$AM=t,this._$Ci=i}_$AS(e,t){return this.update(e,t)}update(e,t){return this.render(...t)}};const ge=me(class extends ye{constructor(e){if(super(e),e.type!==ue||"class"!==e.name||e.strings?.length>2)throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.")}render(e){return" "+Object.keys(e).filter(t=>e[t]).join(" ")+" "}update(e,[t]){if(void 0===this.st){this.st=new Set,void 0!==e.strings&&(this.nt=new Set(e.strings.join(" ").split(/\s/).filter(e=>""!==e)));for(const e in t)t[e]&&!this.nt?.has(e)&&this.st.add(e);return this.render(t)}const i=e.element.classList;for(const e of this.st)e in t||(i.remove(e),this.st.delete(e));for(const e in t){const s=!!t[e];s===this.st.has(e)||this.nt?.has(e)||(s?(i.add(e),this.st.add(e)):(i.remove(e),this.st.delete(e)))}return B}}),fe="important",ve=" !"+fe,be=me(class extends ye{constructor(e){if(super(e),e.type!==ue||"style"!==e.name||e.strings?.length>2)throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.")}render(e){return Object.keys(e).reduce((t,i)=>{const s=e[i];return null==s?t:t+`${i=i.includes("-")?i:i.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g,"-$&").toLowerCase()}:${s};`},"")}update(e,[t]){const{style:i}=e.element;if(void 0===this.ft)return this.ft=new Set(Object.keys(t)),this.render(t);for(const e of this.ft)null==t[e]&&(this.ft.delete(e),e.includes("-")?i.removeProperty(e):i[e]=null);for(const e in t){const s=t[e];if(null!=s){this.ft.add(e);const t="string"==typeof s&&s.endsWith(ve);e.includes("-")||t?i.setProperty(e,t?s.slice(0,-11):s,t?fe:""):i[e]=s}}return B}}),$e="bedtime_stories";function we(e,t){return t?{...e,entry_id:t}:e}const xe=(e,t)=>e.callWS({type:"media_source/resolve_media",media_content_id:t}),ke=(e,t,i)=>e.connection.subscribeMessage(t,we({type:`${$e}/subscribe`},i)),Se=(e,t,i)=>e.callWS(we({type:`${$e}/category/save`,category:t},i)),Ae=(e,t,i)=>e.callWS(we({type:`${$e}/story/save`,story:t},i)),Ce={en:{empty:"No stories yet — add some in the card editor.",no_player:"No player available",this_device:"This device",play_failed:"Playback failed",sort_manual:"My order",sort_alphabetical:"A–Z",sort_play_count:"Favorites",sort_last_played:"Recent",played_never:"never played",played_once:"played once",played_times:"played {count}×",playing:"Playing…",pause:"Pause",resume:"Resume",now_playing:"Now playing",tab_content:"Content",section_appearance:"Appearance",section_sorting:"Sorting & statistics",section_playback:"Playback",content_hint:"Categories group your stories and show up as sub-headers in the card. Edits to existing categories and stories save automatically and are shared by all Bedtime Stories cards — the card's own Save button below only applies to the display options.",new_category:"New category",edit_category:"Edit category",new_story:"New story",edit_story:"Edit story",advanced:"Advanced",media_selected:"Selected media",media_none:"No media file selected yet",media_help:"Browse your Home Assistant media, or upload a new audio file straight to “My media” with the button below.",cover_selected:"Selected image",cover_none:"No cover image selected yet",cover_uploaded:"Uploaded image",cover_help:"Browse your Home Assistant media, or upload a picture with the button below — uploads are automatically resized and cached for fast loading.",or:"or",upload_file:"Upload",uploading:"Uploading…",upload_failed:"Upload failed",upload_no_media_source:"No writable media folder found. Upload via Settings → Media, or use a share.",image_url:"Cover image URL / content id",image_url_help:"Direct image URL, /api/image/serve/… path or media-source id — overrides the picker.",duration_help:"Shown as a badge on the tile, e.g. “~20m”.",media_content_id_help:"Direct media-source URI or stream URL — overrides the picked media.",columns_help:"0 = automatic, based on the available width.",no_categories:"No categories yet. Start by creating one — for example “General” or “Fairy tales”.",title:"Title",layout:"Layout",layout_grid:"Grid",layout_list:"List",columns:"Columns (0 = automatic)",density:"Density",density_cozy:"Cozy",density_compact:"Compact",show_titles:"Show story titles",show_duration:"Show duration badge",show_stats:"Show play statistics",sort:"Sort stories by",sort_direction:"Sort direction",asc:"Ascending",desc:"Descending",show_sort_selector:"Show sort chips in the card",show_player:"Show player chip in the header",show_device_toggle:"Show “This device” toggle",show_device_toggle_help:"Adds a header chip to play the story right here in the browser or companion app, instead of casting to a media player.",show_now_playing:"Show playback controls",show_now_playing_help:"Shows a play/pause button and a progress bar above the stories for whatever is currently playing — on the selected media player or on this device.",keep_awake:"Keep screen awake on this device",keep_awake_help:"While a story plays on “This device”, requests a screen wake lock so the display doesn’t sleep and cut off playback. Only affects this-device playback.",player_mode:"Playback target",player_mode_select:"Player select entity (switchable)",player_mode_fixed:"Fixed media player",media_player:"Media player",entry:"Library",categories:"Categories",add_category:"Add category",add_story:"Add story",edit:"Edit",delete:"Delete",save:"Save",cancel:"Cancel",done:"Done",name:"Name",icon:"Icon",category:"Category",duration:"Duration (minutes)",cover:"Cover image",media:"Media file",media_content_id:"Media URL / content id",media_content_type:"Content type",story_id_hint:"Story ID (for automations)",stories_count:"{count} stories",confirm_delete_category:"Delete this category and all of its stories?",confirm_delete_story:"Delete this story?",not_configured:"Bedtime Stories integration is not set up yet. Add it under Settings → Devices & services.",reset_stats:"Reset statistics",confirm_reset_stats:"Reset play statistics for this story?",drag_reorder:"Drag to reorder"},de:{empty:"Noch keine Geschichten – füge welche im Karten-Editor hinzu.",no_player:"Kein Player verfügbar",this_device:"Dieses Gerät",play_failed:"Wiedergabe fehlgeschlagen",sort_manual:"Meine Reihenfolge",sort_alphabetical:"A–Z",sort_play_count:"Lieblinge",sort_last_played:"Zuletzt",played_never:"noch nie gehört",played_once:"1× gehört",played_times:"{count}× gehört",playing:"Läuft…",pause:"Pause",resume:"Fortsetzen",now_playing:"Wird abgespielt",tab_content:"Inhalte",section_appearance:"Darstellung",section_sorting:"Sortierung & Statistik",section_playback:"Wiedergabe",content_hint:"Kategorien gruppieren deine Geschichten und erscheinen als Zwischenüberschriften in der Karte. Änderungen an bestehenden Kategorien und Geschichten werden automatisch gespeichert und gelten für alle Bedtime-Stories-Karten — die Save-Schaltfläche der Karte selbst betrifft nur die Darstellungsoptionen.",new_category:"Neue Kategorie",edit_category:"Kategorie bearbeiten",new_story:"Neue Geschichte",edit_story:"Geschichte bearbeiten",advanced:"Erweitert",media_selected:"Ausgewählte Medien",media_none:"Noch keine Mediendatei ausgewählt",media_help:"Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten eine neue Audiodatei direkt in „Meine Medien“ hoch.",cover_selected:"Ausgewähltes Bild",cover_none:"Noch kein Cover-Bild ausgewählt",cover_uploaded:"Hochgeladenes Bild",cover_help:"Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild hoch — Uploads werden automatisch verkleinert und für schnelles Laden zwischengespeichert.",or:"oder",upload_file:"Hochladen",uploading:"Wird hochgeladen…",upload_failed:"Upload fehlgeschlagen",upload_no_media_source:"Kein beschreibbarer Medienordner gefunden. Lade über Einstellungen → Medien hoch oder nutze eine Freigabe.",image_url:"Cover-Bild-URL / Content-ID",image_url_help:"Direkte Bild-URL, /api/image/serve/…-Pfad oder media-source-ID — übersteuert die Auswahl.",duration_help:"Wird als Badge auf der Kachel angezeigt, z. B. „~20m“.",media_content_id_help:"Direkte media-source-URI oder Stream-URL — übersteuert die ausgewählte Datei.",columns_help:"0 = automatisch, passend zur verfügbaren Breite.",no_categories:"Noch keine Kategorien. Leg zuerst eine an — zum Beispiel „Allgemein“ oder „Märchen“.",title:"Titel",layout:"Darstellung",layout_grid:"Raster",layout_list:"Liste",columns:"Spalten (0 = automatisch)",density:"Dichte",density_cozy:"Gemütlich",density_compact:"Kompakt",show_titles:"Titel der Geschichten anzeigen",show_duration:"Dauer-Badge anzeigen",show_stats:"Hörstatistik anzeigen",sort:"Geschichten sortieren nach",sort_direction:"Sortierrichtung",asc:"Aufsteigend",desc:"Absteigend",show_sort_selector:"Sortier-Chips in der Karte anzeigen",show_player:"Player-Chip im Kopf anzeigen",show_device_toggle:"„Dieses Gerät“-Schalter anzeigen",show_device_toggle_help:"Fügt oben einen Chip hinzu, um die Geschichte direkt hier im Browser oder in der Companion-App abzuspielen statt auf einen Mediaplayer zu casten.",show_now_playing:"Wiedergabesteuerung anzeigen",show_now_playing_help:"Zeigt über den Geschichten einen Play/Pause-Knopf und einen Fortschrittsbalken für das, was gerade läuft — auf dem gewählten Mediaplayer oder auf diesem Gerät.",keep_awake:"Bildschirm auf diesem Gerät wachhalten",keep_awake_help:"Während eine Geschichte auf „Dieses Gerät“ läuft, wird ein Wake-Lock angefordert, damit der Bildschirm nicht in den Ruhezustand geht und die Wiedergabe abbricht. Betrifft nur die Wiedergabe auf diesem Gerät.",player_mode:"Wiedergabeziel",player_mode_select:"Player-Auswahl-Entität (umschaltbar)",player_mode_fixed:"Fester Medienplayer",media_player:"Medienplayer",entry:"Bibliothek",categories:"Kategorien",add_category:"Kategorie hinzufügen",add_story:"Geschichte hinzufügen",edit:"Bearbeiten",delete:"Löschen",save:"Speichern",cancel:"Abbrechen",done:"Fertig",name:"Name",icon:"Icon",category:"Kategorie",duration:"Dauer (Minuten)",cover:"Cover-Bild",media:"Mediendatei",media_content_id:"Medien-URL / Content-ID",media_content_type:"Content-Type",story_id_hint:"Geschichten-ID (für Automationen)",stories_count:"{count} Geschichten",confirm_delete_category:"Diese Kategorie samt aller Geschichten löschen?",confirm_delete_story:"Diese Geschichte löschen?",not_configured:"Die Bedtime-Stories-Integration ist noch nicht eingerichtet. Füge sie unter Einstellungen → Geräte & Dienste hinzu.",reset_stats:"Statistik zurücksetzen",confirm_reset_stats:"Hörstatistik dieser Geschichte zurücksetzen?",drag_reorder:"Zum Sortieren ziehen"}};function Ee(e,t,i){const s=(e?.locale?.language??e?.language??"en").split("-")[0];let r=(Ce[s]??Ce.en)[t]??Ce.en[t]??t;if(i)for(const[e,t]of Object.entries(i))r=r.replace(`{${e}}`,String(t));return r}function Pe(e){return"string"==typeof e&&e.startsWith("media-source://")}const De=new Map;async function ze(e,t){if(!t)return null;if(!Pe(t))return t;const i=Date.now(),s=De.get(t);if(s&&i-s.at<24e4)return s.url;try{const{url:s}=await xe(e,t);return De.set(t,{url:s,at:i}),s}catch{return null}}const Te={layout:"grid",columns:0,density:"cozy",show_titles:!0,show_duration:!0,show_stats:!1,sort:"manual",sort_direction:"asc",show_sort_selector:!1,show_player:!0,show_device_toggle:!0,show_now_playing:!0,keep_awake:!0,player_mode:"select"};var Le;let Me=class extends ne{constructor(){super(...arguments),this._entries=[],this._covers={},this._formReady=!1,this._categoryDraft=null,this._storyDraft=null,this._storyAdvanced=!1,this._savingContent=!1,this._computeLabel=e=>"entry_id"===e.name?this._l("entry"):this._l(e.name),this._computeHelper=e=>"columns"===e.name?this._l("columns_help"):"show_device_toggle"===e.name?this._l("show_device_toggle_help"):"show_now_playing"===e.name?this._l("show_now_playing_help"):"keep_awake"===e.name?this._l("keep_awake_help"):void 0,this._noLabel=()=>"",this._dragEnd=()=>{this._dragKind=void 0,this._dragId=void 0,this._dragCategoryId=void 0,this._dragOverId=void 0}}static{Le=this}setConfig(e){this._config={...e},this._connectLibrary()}connectedCallback(){super.connectedCallback(),async function(){if(!customElements.get("ha-form"))try{const e=await(window.loadCardHelpers?.());if(!e)return;const t=await e.createCardElement({type:"entities",entities:[]});await(t.constructor.getConfigElement?.())}catch{}}().then(()=>{this._formReady=!0}),this._connectLibrary()}disconnectedCallback(){super.disconnectedCallback(),this._unsubscribe?.then(e=>e()).catch(()=>{}),this._unsubscribe=void 0,this._subscribedEntry=void 0,this._contentTimer&&(clearTimeout(this._contentTimer),this._contentTimer=void 0,this._autoSaveContent())}updated(){this.hass&&!this._unsubscribe&&this._connectLibrary()}_connectLibrary(){if(!this.hass||!this.isConnected)return;const e=this._config?.entry_id??"";var t;this._unsubscribe&&this._subscribedEntry===e||(this._unsubscribe?.then(e=>e()).catch(()=>{}),this._subscribedEntry=e,(t=this.hass,t.callWS({type:`${$e}/entries/list`})).then(e=>{this._entries=e}),this._unsubscribe=ke(this.hass,e=>{this._library=e,this._error=void 0,this._resolveCovers(e)},this._config?.entry_id||void 0),this._unsubscribe.catch(()=>{this._unsubscribe=void 0,this._library=void 0}))}_l(e,t){return Ee(this.hass,e,t)}async _resolveCovers(e){if(!this.hass)return;const t={};await Promise.all(e.stories.map(async e=>{if(!Pe(e.image))return;const i=await ze(this.hass,e.image);i&&i!==this._covers[e.id]&&(t[e.id]=i)})),Object.keys(t).length&&(this._covers={...this._covers,...t})}_storyThumb(e){return e.image?Pe(e.image)?this._covers[e.id]??null:e.image:null}_basicsSchema(){const e=[];return this._entries.length>1&&e.push({name:"entry_id",selector:{select:{mode:"dropdown",options:this._entries.map(e=>({value:e.entry_id,label:e.name}))}}}),e.push({name:"title",selector:{text:{}}}),e}_appearanceSchema(){const e={...Te,...this._config},t=[{name:"layout",selector:{select:{mode:"dropdown",options:[{value:"grid",label:this._l("layout_grid")},{value:"list",label:this._l("layout_list")}]}}}];return"list"===e.layout?t.push({name:"density",selector:{select:{mode:"dropdown",options:[{value:"cozy",label:this._l("density_cozy")},{value:"compact",label:this._l("density_compact")}]}}}):t.push({name:"columns",selector:{number:{min:0,max:8,mode:"box"}}}),[{name:"",type:"grid",schema:t},{name:"",type:"grid",schema:[{name:"show_titles",selector:{boolean:{}}},{name:"show_duration",selector:{boolean:{}}}]}]}_sortingSchema(){return[{name:"",type:"grid",schema:[{name:"sort",selector:{select:{mode:"dropdown",options:[{value:"manual",label:this._l("sort_manual")},{value:"alphabetical",label:this._l("sort_alphabetical")},{value:"play_count",label:this._l("sort_play_count")},{value:"last_played",label:this._l("sort_last_played")}]}}},{name:"sort_direction",selector:{select:{mode:"dropdown",options:[{value:"asc",label:this._l("asc")},{value:"desc",label:this._l("desc")}]}}}]},{name:"",type:"grid",schema:[{name:"show_sort_selector",selector:{boolean:{}}},{name:"show_stats",selector:{boolean:{}}}]}]}_playbackSchema(){const e={...Te,...this._config},t=[{name:"player_mode",selector:{select:{mode:"dropdown",options:[{value:"select",label:this._l("player_mode_select")},{value:"fixed",label:this._l("player_mode_fixed")}]}}}];return"fixed"===e.player_mode?t.push({name:"media_player",selector:{entity:{domain:"media_player"}}}):t.push({name:"show_player",selector:{boolean:{}}}),t.push({name:"show_device_toggle",selector:{boolean:{}}}),t.push({name:"show_now_playing",selector:{boolean:{}}}),t.push({name:"keep_awake",selector:{boolean:{}}}),t}_settingsChanged(e){e.stopPropagation();const t=e.detail.value;this._config={...this._config,...t,type:"custom:bedtime-stories-card"},function(e,t,i){const s=new CustomEvent(t,{bubbles:!0,composed:!0,detail:i??{}});e.dispatchEvent(s)}(this,"config-changed",{config:this._config}),this._connectLibrary()}_renderSettingsForm(e){return W`
       <ha-form
         .hass=${this.hass}
-        .data=${{ ...DEFAULT_CONFIG, ...this._config }}
-        .schema=${schema}
+        .data=${{...Te,...this._config}}
+        .schema=${e}
         .computeLabel=${this._computeLabel}
         .computeHelper=${this._computeHelper}
         @value-changed=${this._settingsChanged}
       ></ha-form>
-    `;
-    }
-    // ---- content management ---------------------------------------------------
-    get _entryId() {
-        return this._config?.entry_id || undefined;
-    }
-    _startCategory(category) {
-        this._clearContentTimer();
-        this._storyDraft = null;
-        this._categoryDraft = category
-            ? { id: category.id, name: category.name, icon: category.icon }
-            : { name: "", icon: "mdi:teddy-bear" };
-    }
-    _startStory(categoryId, story) {
-        this._clearContentTimer();
-        this._categoryDraft = null;
-        this._storyAdvanced = false;
-        this._storyDraft = story
-            ? {
-                id: story.id,
-                category_id: story.category_id,
-                title: story.title,
-                duration_min: story.duration_min,
-                image: story.image,
-                media_content_id: story.media_content_id,
-                media_content_type: story.media_content_type,
-                media: {
-                    media_content_id: story.media_content_id,
-                    media_content_type: story.media_content_type,
-                },
-                cover_media: isMediaSource(story.image)
-                    ? { media_content_id: story.image, media_content_type: "image/*" }
-                    : undefined,
-            }
-            : {
-                category_id: categoryId,
-                title: "",
-                duration_min: null,
-                image: null,
-                media_content_id: "",
-                media_content_type: "audio/mpeg",
-            };
-    }
-    async _saveCategory() {
-        if (!this.hass || !this._categoryDraft)
-            return;
-        this._clearContentTimer();
-        try {
-            await saveCategory(this.hass, { ...this._categoryDraft }, this._entryId);
-            this._categoryDraft = null;
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-    }
-    async _deleteCategory(category) {
-        if (!this.hass)
-            return;
-        if (!window.confirm(this._l("confirm_delete_category")))
-            return;
-        this._clearContentTimer();
-        try {
-            await deleteCategory(this.hass, category.id, this._entryId);
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-    }
-    async _saveStory() {
-        if (!this.hass || !this._storyDraft)
-            return;
-        this._clearContentTimer();
-        const { media: _media, cover_media: _coverMedia, ...story } = this._storyDraft;
-        try {
-            await saveStory(this.hass, { ...story }, this._entryId);
-            this._storyDraft = null;
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-    }
-    async _deleteStory(story) {
-        if (!this.hass)
-            return;
-        if (!window.confirm(this._l("confirm_delete_story")))
-            return;
-        this._clearContentTimer();
-        try {
-            await deleteStory(this.hass, story.id, this._entryId);
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-    }
-    async _resetStoryStats() {
-        if (!this.hass || !this._storyDraft?.id)
-            return;
-        if (!window.confirm(this._l("confirm_reset_stats")))
-            return;
-        try {
-            await resetStats(this.hass, this._storyDraft.id, this._entryId);
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-    }
-    _playCountText(storyId) {
-        const count = this._library?.stats[storyId]?.play_count ?? 0;
-        if (count === 0)
-            return this._l("played_never");
-        if (count === 1)
-            return this._l("played_once");
-        return this._l("played_times", { count });
-    }
-    _clearContentTimer() {
-        if (this._contentTimer) {
-            clearTimeout(this._contentTimer);
-            this._contentTimer = undefined;
-        }
-    }
-    _scheduleContentSave() {
-        this._clearContentTimer();
-        this._contentTimer = setTimeout(() => void this._autoSaveContent(), 700);
-    }
-    /**
-     * Content (categories & stories) lives in the shared library, saved over the
-     * websocket API — it is not part of the card's Lovelace config, so those
-     * edits never enable Home Assistant's card-editor "Save" button. To avoid a
-     * dead-end where a change looks unsaveable, edits to an existing item persist
-     * automatically here (debounced). New items still use their explicit Save
-     * button, since they aren't valid until they have the required fields.
-     */
-    async _autoSaveContent() {
-        this._contentTimer = undefined;
-        if (!this.hass)
-            return;
-        if (this._savingContent) {
-            this._scheduleContentSave();
-            return;
-        }
-        const story = this._storyDraft;
-        const category = this._categoryDraft;
-        this._savingContent = true;
-        try {
-            if (story?.id && story.title.trim() && story.media_content_id.trim()) {
-                const { media: _media, cover_media: _coverMedia, ...payload } = story;
-                await saveStory(this.hass, { ...payload }, this._entryId);
-            }
-            else if (category?.id && category.name.trim()) {
-                await saveCategory(this.hass, { ...category }, this._entryId);
-            }
-        }
-        catch (err) {
-            this._error = err?.message;
-        }
-        finally {
-            this._savingContent = false;
-        }
-    }
-    /** Close an auto-saving draft, flushing any edit still inside the debounce. */
-    async _doneStory() {
-        this._clearContentTimer();
-        await this._autoSaveContent();
-        this._storyDraft = null;
-    }
-    async _doneCategory() {
-        this._clearContentTimer();
-        await this._autoSaveContent();
-        this._categoryDraft = null;
-    }
-    // ---- drag & drop reordering ----------------------------------------------
-    _renderDragHandle(kind, id, categoryId) {
-        return b `
+    `}get _entryId(){return this._config?.entry_id||void 0}_startCategory(e){this._clearContentTimer(),this._storyDraft=null,this._categoryDraft=e?{id:e.id,name:e.name,icon:e.icon}:{name:"",icon:"mdi:teddy-bear"}}_startStory(e,t){this._clearContentTimer(),this._categoryDraft=null,this._storyAdvanced=!1,this._storyDraft=t?{id:t.id,category_id:t.category_id,title:t.title,duration_min:t.duration_min,image:t.image,media_content_id:t.media_content_id,media_content_type:t.media_content_type,media:{media_content_id:t.media_content_id,media_content_type:t.media_content_type},cover_media:Pe(t.image)?{media_content_id:t.image,media_content_type:"image/*"}:void 0}:{category_id:e,title:"",duration_min:null,image:null,media_content_id:"",media_content_type:"audio/mpeg"}}async _saveCategory(){if(this.hass&&this._categoryDraft){this._clearContentTimer();try{await Se(this.hass,{...this._categoryDraft},this._entryId),this._categoryDraft=null}catch(e){this._error=e?.message}}}async _deleteCategory(e){if(this.hass&&window.confirm(this._l("confirm_delete_category"))){this._clearContentTimer();try{await(t=this.hass,i=e.id,s=this._entryId,t.callWS(we({type:`${$e}/category/delete`,category_id:i},s)))}catch(e){this._error=e?.message}var t,i,s}}async _saveStory(){if(!this.hass||!this._storyDraft)return;this._clearContentTimer();const{media:e,cover_media:t,...i}=this._storyDraft;try{await Ae(this.hass,{...i},this._entryId),this._storyDraft=null}catch(e){this._error=e?.message}}async _deleteStory(e){if(this.hass&&window.confirm(this._l("confirm_delete_story"))){this._clearContentTimer();try{await(t=this.hass,i=e.id,s=this._entryId,t.callWS(we({type:`${$e}/story/delete`,story_id:i},s)))}catch(e){this._error=e?.message}var t,i,s}}async _resetStoryStats(){var e,t,i;if(this.hass&&this._storyDraft?.id&&window.confirm(this._l("confirm_reset_stats")))try{await(e=this.hass,t=this._storyDraft.id,i=this._entryId,e.callWS(we({type:`${$e}/stats/reset`,...t?{story_id:t}:{}},i)))}catch(e){this._error=e?.message}}_playCountText(e){const t=this._library?.stats[e]?.play_count??0;return 0===t?this._l("played_never"):1===t?this._l("played_once"):this._l("played_times",{count:t})}_clearContentTimer(){this._contentTimer&&(clearTimeout(this._contentTimer),this._contentTimer=void 0)}_scheduleContentSave(){this._clearContentTimer(),this._contentTimer=setTimeout(()=>{this._autoSaveContent()},700)}async _autoSaveContent(){if(this._contentTimer=void 0,!this.hass)return;if(this._savingContent)return void this._scheduleContentSave();const e=this._storyDraft,t=this._categoryDraft;this._savingContent=!0;try{if(e?.id&&e.title.trim()&&e.media_content_id.trim()){const{media:t,cover_media:i,...s}=e;await Ae(this.hass,{...s},this._entryId)}else t?.id&&t.name.trim()&&await Se(this.hass,{...t},this._entryId)}catch(e){this._error=e?.message}finally{this._savingContent=!1}}async _doneStory(){this._clearContentTimer(),await this._autoSaveContent(),this._storyDraft=null}async _doneCategory(){this._clearContentTimer(),await this._autoSaveContent(),this._categoryDraft=null}_renderDragHandle(e,t,i){return W`
       <span
         class="drag-handle"
         draggable="true"
         title=${this._l("drag_reorder")}
-        @dragstart=${(ev) => this._dragStart(kind, id, categoryId, ev)}
+        @dragstart=${s=>this._dragStart(e,t,i,s)}
         @dragend=${this._dragEnd}
       >
         <ha-icon icon="mdi:drag-vertical"></ha-icon>
       </span>
-    `;
-    }
-    _dragStart(kind, id, categoryId, ev) {
-        this._dragKind = kind;
-        this._dragId = id;
-        this._dragCategoryId = categoryId;
-        if (ev.dataTransfer) {
-            ev.dataTransfer.effectAllowed = "move";
-            ev.dataTransfer.setData("text/plain", id);
-            const row = ev.currentTarget.closest(kind === "category" ? ".category-card" : ".story-row");
-            if (row)
-                ev.dataTransfer.setDragImage(row, 24, 16);
-        }
-    }
-    _dragOver(kind, targetId, categoryId, ev) {
-        if (this._dragKind !== kind)
-            return;
-        if (kind === "story" && this._dragCategoryId !== categoryId)
-            return;
-        ev.preventDefault(); // allow the drop
-        if (ev.dataTransfer)
-            ev.dataTransfer.dropEffect = "move";
-        if (this._dragOverId !== targetId)
-            this._dragOverId = targetId;
-    }
-    _drop(kind, targetId, categoryId, ev) {
-        // Kind mismatch (e.g. a category dropped on a story row): let the event
-        // bubble to the matching drop target instead of swallowing it here.
-        if (this._dragKind !== kind)
-            return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        const dragged = this._dragId;
-        if (!dragged || dragged === targetId || !this.hass) {
-            this._dragEnd();
-            return;
-        }
-        const el = ev.currentTarget;
-        const rect = el.getBoundingClientRect();
-        const after = ev.clientY > rect.top + rect.height / 2;
-        if (kind === "category") {
-            const ids = this._moveInList((this._library?.categories ?? []).map((c) => c.id), dragged, targetId, after);
-            void reorderCategories(this.hass, ids, this._entryId).catch((err) => (this._error = err?.message));
-        }
-        else if (categoryId && this._dragCategoryId === categoryId) {
-            const ids = this._moveInList((this._library?.stories ?? [])
-                .filter((s) => s.category_id === categoryId)
-                .map((s) => s.id), dragged, targetId, after);
-            void reorderStories(this.hass, ids, this._entryId).catch((err) => (this._error = err?.message));
-        }
-        this._dragEnd();
-    }
-    _moveInList(ids, draggedId, targetId, after) {
-        const result = ids.filter((id) => id !== draggedId);
-        const idx = result.indexOf(targetId);
-        if (idx < 0)
-            return ids;
-        result.splice(after ? idx + 1 : idx, 0, draggedId);
-        return result;
-    }
-    _categoryFormChanged(ev) {
-        ev.stopPropagation();
-        this._categoryDraft = {
-            ...this._categoryDraft,
-            ...ev.detail.value,
-        };
-        if (this._categoryDraft.id)
-            this._scheduleContentSave();
-    }
-    _storyFormChanged(ev) {
-        ev.stopPropagation();
-        const value = ev.detail.value;
-        const draft = { ...this._storyDraft, ...value };
-        // Copy the media browser pick into the raw content id/type fields.
-        const media = value.media;
-        if (media?.media_content_id &&
-            media.media_content_id !== this._storyDraft?.media?.media_content_id) {
-            draft.media_content_id = media.media_content_id;
-            draft.media_content_type =
-                media.media_content_type ?? draft.media_content_type;
-            if (!draft.title && media.metadata?.title) {
-                draft.title = media.metadata.title;
-            }
-        }
-        // Copy the cover image pick (a media-source id) into the image field;
-        // clearing the picker clears the image too.
-        const coverMedia = value.cover_media;
-        if (coverMedia &&
-            coverMedia.media_content_id !==
-                this._storyDraft?.cover_media?.media_content_id) {
-            draft.image = coverMedia.media_content_id || null;
-        }
-        this._storyDraft = draft;
-        if (draft.id)
-            this._scheduleContentSave();
-    }
-    _mediaDisplayName(draft) {
-        if (draft.media?.metadata?.title)
-            return draft.media.metadata.title;
-        if (!draft.media_content_id)
-            return undefined;
-        const clean = draft.media_content_id.split("?")[0];
-        const segment = decodeURIComponent(clean.split("/").pop() ?? "");
-        return segment || draft.media_content_id;
-    }
-    _coverDisplayName(draft) {
-        if (draft.cover_media?.metadata?.title) {
-            return draft.cover_media.metadata.title;
-        }
-        if (!draft.image)
-            return undefined;
-        const clean = draft.image.split("?")[0];
-        const segment = decodeURIComponent(clean.split("/").pop() ?? "");
-        return segment || draft.image;
-    }
-    // ---- direct upload to "My media" -----------------------------------------
-    static { this._LOCAL_PREFIX = "media-source://media_source/local"; }
-    /** Find a writable local media_source folder to upload into (cached). */
-    async _localMediaFolder() {
-        if (this._uploadFolder)
-            return this._uploadFolder;
-        const prefix = BedtimeStoriesCardEditor_1._LOCAL_PREFIX;
-        const folders = this._foldersFromExistingMedia();
-        for (const folder of await this._browseLocalFolders()) {
-            if (!folders.includes(folder))
-                folders.push(folder);
-        }
-        // Prefer the default "My media" (/media) folder so uploads land where the
-        // user expects, not in whatever folder a stray existing story happens to
-        // use (e.g. a mounted /cdrom in a sandbox).
-        const target = folders.find((f) => f === `${prefix}/media`) ??
-            folders.find((f) => f.endsWith("/media")) ??
-            folders[0] ??
-            null;
-        if (target)
-            this._uploadFolder = target;
-        return target;
-    }
-    /**
-     * Reuse the folders existing stories' media/cover already live in. These are
-     * real local folders in this instance's exact id format, so no assumptions
-     * about the media_source layout are needed.
-     */
-    _foldersFromExistingMedia() {
-        const prefix = BedtimeStoriesCardEditor_1._LOCAL_PREFIX;
-        const folders = [];
-        for (const story of this._library?.stories ?? []) {
-            for (const id of [story.media_content_id, story.image]) {
-                if (!id || !id.startsWith(prefix))
-                    continue;
-                const clean = id.split("?")[0];
-                const slash = clean.lastIndexOf("/");
-                // Require a path segment after the prefix (a concrete directory).
-                if (slash <= prefix.length)
-                    continue;
-                const folder = clean.slice(0, slash);
-                if (!folders.includes(folder))
-                    folders.push(folder);
-            }
-        }
-        return folders;
-    }
-    /** Best-effort: list the local media source's directories by browsing. */
-    async _browseLocalFolders() {
-        if (!this.hass)
-            return [];
-        const prefix = BedtimeStoriesCardEditor_1._LOCAL_PREFIX;
-        const isLocal = (id) => !!id && id.startsWith(prefix);
-        const dirsOf = (item) => (item?.children ?? [])
-            .filter((c) => c.can_expand && isLocal(c.media_content_id))
-            .map((c) => c.media_content_id);
-        const browse = async (id) => {
-            try {
-                return await this.hass.callWS({
-                    type: "media_source/browse_media",
-                    media_content_id: id,
-                });
-            }
-            catch {
-                return undefined;
-            }
-        };
-        for (const root of [`${prefix}/.`, prefix, "", "media-source://"]) {
-            const item = await browse(root);
-            if (!item)
-                continue;
-            const direct = dirsOf(item);
-            if (direct.length)
-                return direct;
-            const local = (item.children ?? []).find((c) => isLocal(c.media_content_id));
-            if (local?.media_content_id) {
-                const nested = dirsOf(await browse(local.media_content_id));
-                if (nested.length)
-                    return nested;
-            }
-        }
-        return [];
-    }
-    async _uploadToLocal(file) {
-        const folder = await this._localMediaFolder();
-        if (!folder || !this.hass) {
-            this._error = this._l("upload_no_media_source");
-            return null;
-        }
-        const form = new FormData();
-        form.append("media_content_id", folder);
-        form.append("file", file);
-        const resp = await this.hass.fetchWithAuth("/api/media_source/local_source/upload", { method: "POST", body: form });
-        if (!resp.ok) {
-            throw new Error(`${this._l("upload_failed")} (HTTP ${resp.status})`);
-        }
-        const data = (await resp.json());
-        // The endpoint returns the new id; fall back to composing it from the
-        // target folder + filename (media_source ids are raw paths).
-        return data.media_content_id ?? data.id ?? `${folder}/${file.name}`;
-    }
-    async _uploadMediaFile(ev) {
-        const input = ev.target;
-        const file = input.files?.[0];
-        input.value = "";
-        if (!file || !this._storyDraft)
-            return;
-        this._uploading = "media";
-        this._error = undefined;
-        try {
-            const id = await this._uploadToLocal(file);
-            if (!id)
-                return;
-            const type = file.type || "audio/mpeg";
-            const draft = {
-                ...this._storyDraft,
-                media_content_id: id,
-                media_content_type: type,
-                media: {
-                    media_content_id: id,
-                    media_content_type: type,
-                    metadata: { title: file.name },
-                },
-            };
-            if (!draft.title.trim())
-                draft.title = file.name.replace(/\.[^./\\]+$/, "");
-            this._storyDraft = draft;
-            if (draft.id)
-                this._scheduleContentSave();
-        }
-        catch (err) {
-            this._error =
-                err?.message ?? this._l("upload_failed");
-        }
-        finally {
-            this._uploading = undefined;
-        }
-    }
-    async _uploadCoverFile(ev) {
-        const input = ev.target;
-        const file = input.files?.[0];
-        input.value = "";
-        if (!file || !this._storyDraft)
-            return;
-        this._uploading = "cover";
-        this._error = undefined;
-        try {
-            const id = await this._uploadToLocal(file);
-            if (!id)
-                return;
-            this._storyDraft = {
-                ...this._storyDraft,
-                image: id,
-                cover_media: {
-                    media_content_id: id,
-                    media_content_type: file.type || "image/*",
-                },
-            };
-            if (this._storyDraft.id)
-                this._scheduleContentSave();
-        }
-        catch (err) {
-            this._error =
-                err?.message ?? this._l("upload_failed");
-        }
-        finally {
-            this._uploading = undefined;
-        }
-    }
-    // ---- rendering ----------------------------------------------------------
-    /** "…or upload a file" row shown under the media / cover pickers. */
-    _renderUploadRow(kind, accept, handler) {
-        return b `
+    `}_dragStart(e,t,i,s){if(this._dragKind=e,this._dragId=t,this._dragCategoryId=i,s.dataTransfer){s.dataTransfer.effectAllowed="move",s.dataTransfer.setData("text/plain",t);const i=s.currentTarget.closest("category"===e?".category-card":".story-row");i&&s.dataTransfer.setDragImage(i,24,16)}}_dragOver(e,t,i,s){this._dragKind===e&&("story"===e&&this._dragCategoryId!==i||(s.preventDefault(),s.dataTransfer&&(s.dataTransfer.dropEffect="move"),this._dragOverId!==t&&(this._dragOverId=t)))}_drop(e,t,i,s){if(this._dragKind!==e)return;s.preventDefault(),s.stopPropagation();const r=this._dragId;if(!r||r===t||!this.hass)return void this._dragEnd();const o=s.currentTarget.getBoundingClientRect(),a=s.clientY>o.top+o.height/2;if("category"===e){const e=this._moveInList((this._library?.categories??[]).map(e=>e.id),r,t,a);(n=this.hass,c=e,l=this._entryId,n.callWS(we({type:`${$e}/category/reorder`,category_ids:c},l))).catch(e=>this._error=e?.message)}else if(i&&this._dragCategoryId===i){const e=this._moveInList((this._library?.stories??[]).filter(e=>e.category_id===i).map(e=>e.id),r,t,a);((e,t,i)=>e.callWS(we({type:`${$e}/story/reorder`,story_ids:t},i)))(this.hass,e,this._entryId).catch(e=>this._error=e?.message)}var n,c,l;this._dragEnd()}_moveInList(e,t,i,s){const r=e.filter(e=>e!==t),o=r.indexOf(i);return o<0?e:(r.splice(s?o+1:o,0,t),r)}_categoryFormChanged(e){e.stopPropagation(),this._categoryDraft={...this._categoryDraft,...e.detail.value},this._categoryDraft.id&&this._scheduleContentSave()}_storyFormChanged(e){e.stopPropagation();const t=e.detail.value,i={...this._storyDraft,...t},s=t.media;s?.media_content_id&&s.media_content_id!==this._storyDraft?.media?.media_content_id&&(i.media_content_id=s.media_content_id,i.media_content_type=s.media_content_type??i.media_content_type,!i.title&&s.metadata?.title&&(i.title=s.metadata.title));const r=t.cover_media;r&&r.media_content_id!==this._storyDraft?.cover_media?.media_content_id&&(i.image=r.media_content_id||null),this._storyDraft=i,i.id&&this._scheduleContentSave()}_mediaDisplayName(e){if(e.media?.metadata?.title)return e.media.metadata.title;if(!e.media_content_id)return;const t=e.media_content_id.split("?")[0];return decodeURIComponent(t.split("/").pop()??"")||e.media_content_id}_coverDisplayName(e){if(e.cover_media?.metadata?.title)return e.cover_media.metadata.title;if(!e.image)return;if(e.image.startsWith("/api/image/serve/"))return this._l("cover_uploaded");const t=e.image.split("?")[0];return decodeURIComponent(t.split("/").pop()??"")||e.image}static{this._LOCAL_PREFIX="media-source://media_source/local"}async _localMediaFolder(){if(this._uploadFolder)return this._uploadFolder;const e=Le._LOCAL_PREFIX,t=this._foldersFromExistingMedia();for(const e of await this._browseLocalFolders())t.includes(e)||t.push(e);const i=t.find(t=>t===`${e}/media`)??t.find(e=>e.endsWith("/media"))??t[0]??null;return i&&(this._uploadFolder=i),i}_foldersFromExistingMedia(){const e=Le._LOCAL_PREFIX,t=[];for(const i of this._library?.stories??[])for(const s of[i.media_content_id,i.image]){if(!s||!s.startsWith(e))continue;const i=s.split("?")[0],r=i.lastIndexOf("/");if(r<=e.length)continue;const o=i.slice(0,r);t.includes(o)||t.push(o)}return t}async _browseLocalFolders(){if(!this.hass)return[];const e=Le._LOCAL_PREFIX,t=t=>!!t&&t.startsWith(e),i=e=>(e?.children??[]).filter(e=>e.can_expand&&t(e.media_content_id)).map(e=>e.media_content_id),s=async e=>{try{return await this.hass.callWS({type:"media_source/browse_media",media_content_id:e})}catch{return}};for(const r of[`${e}/.`,e,"","media-source://"]){const e=await s(r);if(!e)continue;const o=i(e);if(o.length)return o;const a=(e.children??[]).find(e=>t(e.media_content_id));if(a?.media_content_id){const e=i(await s(a.media_content_id));if(e.length)return e}}return[]}async _uploadToLocal(e){const t=await this._localMediaFolder();if(!t||!this.hass)return this._error=this._l("upload_no_media_source"),null;const i=new FormData;i.append("media_content_id",t),i.append("file",e);const s=await this.hass.fetchWithAuth("/api/media_source/local_source/upload",{method:"POST",body:i});if(!s.ok)throw new Error(`${this._l("upload_failed")} (HTTP ${s.status})`);const r=await s.json();return r.media_content_id??r.id??`${t}/${e.name}`}async _uploadMediaFile(e){const t=e.target,i=t.files?.[0];if(t.value="",i&&this._storyDraft){this._uploading="media",this._error=void 0;try{const e=await this._uploadToLocal(i);if(!e)return;const t=i.type||"audio/mpeg",s={...this._storyDraft,media_content_id:e,media_content_type:t,media:{media_content_id:e,media_content_type:t,metadata:{title:i.name}}};s.title.trim()||(s.title=i.name.replace(/\.[^./\\]+$/,"")),this._storyDraft=s,s.id&&this._scheduleContentSave()}catch(e){this._error=e?.message??this._l("upload_failed")}finally{this._uploading=void 0}}}static{this._COVER_SERVE_SIZE="512x512"}async _downscaleImage(e,t=1024,i=.85){if(!e.type.startsWith("image/")||"image/gif"===e.type)return e;try{const s=await createImageBitmap(e),r=Math.min(1,t/Math.max(s.width,s.height));if(r>=1)return s.close(),e;const o=Math.round(s.width*r),a=Math.round(s.height*r),n=document.createElement("canvas");n.width=o,n.height=a;const c=n.getContext("2d");if(!c)return s.close(),e;c.drawImage(s,0,0,o,a),s.close();const l=await new Promise(e=>n.toBlob(e,"image/jpeg",i));if(!l)return e;const d=`${e.name.replace(/\.[^./\\]+$/,"")}.jpg`;return new File([l],d,{type:"image/jpeg"})}catch{return e}}async _uploadCover(e){if(!this.hass)return null;const t=await this._downscaleImage(e);try{const e=new FormData;e.append("file",t);const i=await this.hass.fetchWithAuth("/api/image/upload",{method:"POST",body:e});if(i.ok){const e=await i.json();if(e.id)return`/api/image/serve/${e.id}/${Le._COVER_SERVE_SIZE}`}}catch{}return this._uploadToLocal(t)}async _uploadCoverFile(e){const t=e.target,i=t.files?.[0];if(t.value="",i&&this._storyDraft){this._uploading="cover",this._error=void 0;try{const e=await this._uploadCover(i);if(!e)return;this._storyDraft={...this._storyDraft,image:e,cover_media:Pe(e)?{media_content_id:e,media_content_type:"image/*"}:void 0},this._storyDraft.id&&this._scheduleContentSave()}catch(e){this._error=e?.message??this._l("upload_failed")}finally{this._uploading=void 0}}}_renderUploadRow(e,t,i){return W`
       <div class="upload-row">
         <span class="upload-or">${this._l("or")}</span>
         <mwc-button
           outlined
           dense
-          .disabled=${this._uploading !== undefined}
-          @click=${(ev) => ev.currentTarget
-            .nextElementSibling.click()}
+          .disabled=${void 0!==this._uploading}
+          @click=${e=>e.currentTarget.nextElementSibling.click()}
         >
           <ha-icon slot="icon" icon="mdi:tray-arrow-up"></ha-icon>
-          ${this._uploading === kind
-            ? this._l("uploading")
-            : this._l("upload_file")}
+          ${this._uploading===e?this._l("uploading"):this._l("upload_file")}
         </mwc-button>
         <input
           class="file-input"
           type="file"
-          accept=${accept}
-          @change=${handler}
+          accept=${t}
+          @change=${i}
         />
       </div>
-    `;
-    }
-    render() {
-        if (!this.hass || !this._config)
-            return b ``;
-        if (!this._formReady) {
-            return b `<ha-circular-progress indeterminate></ha-circular-progress>`;
-        }
-        return b `
+    `}render(){return this.hass&&this._config?this._formReady?W`
       ${this._renderSettingsForm(this._basicsSchema())}
       <div class="section">
         <div class="section-header">
@@ -1240,191 +59,131 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
         </div>
         ${this._renderSettingsForm(this._playbackSchema())}
       </div>
-      ${this.hass.user?.is_admin ? this._renderContent() : A}
-    `;
-    }
-    _renderContent() {
-        const lib = this._library;
-        return b `
+      ${this.hass.user?.is_admin?this._renderContent():K}
+    `:W`<ha-circular-progress indeterminate></ha-circular-progress>`:W``}_renderContent(){const e=this._library;return W`
       <div class="section content">
         <div class="section-header">
           <ha-icon icon="mdi:bookshelf"></ha-icon>
           <span>${this._l("tab_content")}</span>
         </div>
         <p class="section-hint">${this._l("content_hint")}</p>
-        ${this._error
-            ? b `<ha-alert alert-type="error">${this._error}</ha-alert>`
-            : A}
-        ${!lib
-            ? b `<p class="section-hint">${this._l("not_configured")}</p>`
-            : b `
-              ${lib.categories.length === 0 && !this._categoryDraft
-                ? b `<p class="section-hint empty">
+        ${this._error?W`<ha-alert alert-type="error">${this._error}</ha-alert>`:K}
+        ${e?W`
+              ${0!==e.categories.length||this._categoryDraft?K:W`<p class="section-hint empty">
                     ${this._l("no_categories")}
-                  </p>`
-                : A}
-              ${lib.categories.map((category) => this._renderCategoryBlock(category, lib))}
-              ${this._categoryDraft && !this._categoryDraft.id
-                ? this._renderCategoryForm()
-                : b `
+                  </p>`}
+              ${e.categories.map(t=>this._renderCategoryBlock(t,e))}
+              ${this._categoryDraft&&!this._categoryDraft.id?this._renderCategoryForm():W`
                     <mwc-button
                       outlined
                       class="add-category"
-                      @click=${() => this._startCategory()}
+                      @click=${()=>this._startCategory()}
                     >
                       <ha-icon slot="icon" icon="mdi:plus"></ha-icon>
                       ${this._l("add_category")}
                     </mwc-button>
                   `}
-            `}
+            `:W`<p class="section-hint">${this._l("not_configured")}</p>`}
       </div>
-    `;
-    }
-    _renderCategoryBlock(category, lib) {
-        const stories = lib.stories.filter((s) => s.category_id === category.id);
-        const editingThis = this._categoryDraft?.id === category.id;
-        return b `
+    `}_renderCategoryBlock(e,t){const i=t.stories.filter(t=>t.category_id===e.id),s=this._categoryDraft?.id===e.id;return W`
       <div
-        class="category-card ${this._dragOverId === category.id
-            ? "drag-over"
-            : ""}"
-        @dragover=${(ev) => this._dragOver("category", category.id, undefined, ev)}
-        @drop=${(ev) => this._drop("category", category.id, undefined, ev)}
+        class="category-card ${this._dragOverId===e.id?"drag-over":""}"
+        @dragover=${t=>this._dragOver("category",e.id,void 0,t)}
+        @drop=${t=>this._drop("category",e.id,void 0,t)}
       >
         <div class="category-head">
-          ${this._renderDragHandle("category", category.id)}
+          ${this._renderDragHandle("category",e.id)}
           <div class="icon-chip">
-            <ha-icon icon=${category.icon || "mdi:teddy-bear"}></ha-icon>
+            <ha-icon icon=${e.icon||"mdi:teddy-bear"}></ha-icon>
           </div>
           <div class="category-text">
-            <span class="category-name">${category.name}</span>
+            <span class="category-name">${e.name}</span>
             <span class="category-meta"
-              >${this._l("stories_count", { count: stories.length })}</span
+              >${this._l("stories_count",{count:i.length})}</span
             >
           </div>
           <ha-icon-button
             .label=${this._l("edit")}
-            @click=${() => this._startCategory(category)}
+            @click=${()=>this._startCategory(e)}
           >
             <ha-icon icon="mdi:pencil-outline"></ha-icon>
           </ha-icon-button>
           <ha-icon-button
             class="danger"
             .label=${this._l("delete")}
-            @click=${() => this._deleteCategory(category)}
+            @click=${()=>this._deleteCategory(e)}
           >
             <ha-icon icon="mdi:trash-can-outline"></ha-icon>
           </ha-icon-button>
         </div>
-        ${editingThis ? this._renderCategoryForm() : A}
+        ${s?this._renderCategoryForm():K}
         <div class="story-list">
-          ${stories.map((story) => this._renderStoryRow(story, lib))}
+          ${i.map(e=>this._renderStoryRow(e,t))}
         </div>
-        ${this._storyDraft &&
-            !this._storyDraft.id &&
-            this._storyDraft.category_id === category.id
-            ? this._renderStoryForm()
-            : b `
+        ${this._storyDraft&&!this._storyDraft.id&&this._storyDraft.category_id===e.id?this._renderStoryForm():W`
               <button
                 class="add-story"
-                @click=${() => this._startStory(category.id)}
+                @click=${()=>this._startStory(e.id)}
               >
                 <ha-icon icon="mdi:plus"></ha-icon>
                 <span>${this._l("add_story")}</span>
               </button>
             `}
       </div>
-    `;
-    }
-    _renderStoryRow(story, lib) {
-        const editingThis = this._storyDraft?.id === story.id;
-        const thumb = this._storyThumb(story);
-        const stats = lib.stats[story.id];
-        const meta = [];
-        if (story.duration_min)
-            meta.push(`~${story.duration_min}m`);
-        if (stats?.play_count) {
-            meta.push(stats.play_count === 1
-                ? this._l("played_once")
-                : this._l("played_times", { count: stats.play_count }));
-        }
-        return b `
+    `}_renderStoryRow(e,t){const i=this._storyDraft?.id===e.id,s=this._storyThumb(e),r=t.stats[e.id],o=[];return e.duration_min&&o.push(`~${e.duration_min}m`),r?.play_count&&o.push(1===r.play_count?this._l("played_once"):this._l("played_times",{count:r.play_count})),W`
       <div
-        class="story-row ${editingThis ? "editing" : ""} ${this._dragOverId ===
-            story.id
-            ? "drag-over"
-            : ""}"
-        @dragover=${(ev) => this._dragOver("story", story.id, story.category_id, ev)}
-        @drop=${(ev) => this._drop("story", story.id, story.category_id, ev)}
+        class="story-row ${i?"editing":""} ${this._dragOverId===e.id?"drag-over":""}"
+        @dragover=${t=>this._dragOver("story",e.id,e.category_id,t)}
+        @drop=${t=>this._drop("story",e.id,e.category_id,t)}
       >
-        ${this._renderDragHandle("story", story.id, story.category_id)}
+        ${this._renderDragHandle("story",e.id,e.category_id)}
         <span
           class="story-thumb"
-          style=${thumb ? `background-image:url("${thumb}")` : ""}
+          style=${s?`background-image:url("${s}")`:""}
         >
-          ${!thumb
-            ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
-            : A}
+          ${s?K:W`<ha-icon icon="mdi:book-open-variant"></ha-icon>`}
         </span>
         <div class="story-text">
-          <span class="story-title">${story.title}</span>
-          ${meta.length
-            ? b `<span class="story-meta">${meta.join(" · ")}</span>`
-            : A}
+          <span class="story-title">${e.title}</span>
+          ${o.length?W`<span class="story-meta">${o.join(" · ")}</span>`:K}
         </div>
         <ha-icon-button
           .label=${this._l("edit")}
-          @click=${() => this._startStory(story.category_id, story)}
+          @click=${()=>this._startStory(e.category_id,e)}
         >
           <ha-icon icon="mdi:pencil-outline"></ha-icon>
         </ha-icon-button>
         <ha-icon-button
           class="danger"
           .label=${this._l("delete")}
-          @click=${() => this._deleteStory(story)}
+          @click=${()=>this._deleteStory(e)}
         >
           <ha-icon icon="mdi:trash-can-outline"></ha-icon>
         </ha-icon-button>
       </div>
-      ${editingThis ? this._renderStoryForm() : A}
-    `;
-    }
-    _renderCategoryForm() {
-        const draft = this._categoryDraft;
-        const schema = [
-            {
-                name: "",
-                type: "grid",
-                schema: [
-                    { name: "name", selector: { text: {} } },
-                    { name: "icon", selector: { icon: {} } },
-                ],
-            },
-        ];
-        return b `
+      ${i?this._renderStoryForm():K}
+    `}_renderCategoryForm(){const e=this._categoryDraft;return W`
       <div class="form-panel">
         <div class="form-title">
-          ${this._l(draft.id ? "edit_category" : "new_category")}
+          ${this._l(e.id?"edit_category":"new_category")}
         </div>
         <ha-form
           .hass=${this.hass}
-          .data=${draft}
-          .schema=${schema}
+          .data=${e}
+          .schema=${[{name:"",type:"grid",schema:[{name:"name",selector:{text:{}}},{name:"icon",selector:{icon:{}}}]}]}
           .computeLabel=${this._computeLabel}
           @value-changed=${this._categoryFormChanged}
         ></ha-form>
         <div class="form-actions">
-          ${draft.id
-            ? b `<mwc-button raised @click=${this._doneCategory}>
+          ${e.id?W`<mwc-button raised @click=${this._doneCategory}>
                 ${this._l("done")}
-              </mwc-button>`
-            : b `
-                <mwc-button @click=${() => (this._categoryDraft = null)}>
+              </mwc-button>`:W`
+                <mwc-button @click=${()=>this._categoryDraft=null}>
                   ${this._l("cancel")}
                 </mwc-button>
                 <mwc-button
                   raised
-                  .disabled=${!draft.name.trim()}
+                  .disabled=${!e.name.trim()}
                   @click=${this._saveCategory}
                 >
                   ${this._l("save")}
@@ -1432,76 +191,17 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
               `}
         </div>
       </div>
-    `;
-    }
-    _renderStoryForm() {
-        const draft = this._storyDraft;
-        const categories = this._library?.categories ?? [];
-        const basicsSchema = [
-            { name: "title", selector: { text: {} } },
-            {
-                name: "",
-                type: "grid",
-                schema: [
-                    {
-                        name: "category_id",
-                        selector: {
-                            select: {
-                                mode: "dropdown",
-                                options: categories.map((c) => ({
-                                    value: c.id,
-                                    label: c.name,
-                                })),
-                            },
-                        },
-                    },
-                    {
-                        name: "duration_min",
-                        selector: { number: { min: 1, max: 600, mode: "box" } },
-                    },
-                ],
-            },
-        ];
-        const mediaSchema = [
-            { name: "media", selector: { media: { accept: ["audio/*"] } } },
-        ];
-        const coverSchema = [
-            { name: "cover_media", selector: { media: { accept: ["image/*"] } } },
-        ];
-        const advancedSchema = [
-            { name: "media_content_id", selector: { text: {} } },
-            { name: "media_content_type", selector: { text: {} } },
-            { name: "image", selector: { text: {} } },
-        ];
-        const labels = {
-            title: this._l("title"),
-            category_id: this._l("category"),
-            duration_min: this._l("duration"),
-            media: this._l("media"),
-            media_content_id: this._l("media_content_id"),
-            media_content_type: this._l("media_content_type"),
-            image: this._l("image_url"),
-        };
-        const helpers = {
-            duration_min: this._l("duration_help"),
-            media_content_id: this._l("media_content_id_help"),
-            image: this._l("image_url_help"),
-        };
-        const computeLabel = (s) => labels[s.name] ?? s.name;
-        const computeHelper = (s) => helpers[s.name];
-        const mediaName = this._mediaDisplayName(draft);
-        const coverName = this._coverDisplayName(draft);
-        return b `
+    `}_renderStoryForm(){const e=this._storyDraft,t=[{name:"title",selector:{text:{}}},{name:"",type:"grid",schema:[{name:"category_id",selector:{select:{mode:"dropdown",options:(this._library?.categories??[]).map(e=>({value:e.id,label:e.name}))}}},{name:"duration_min",selector:{number:{min:1,max:600,mode:"box"}}}]}],i={title:this._l("title"),category_id:this._l("category"),duration_min:this._l("duration"),media:this._l("media"),media_content_id:this._l("media_content_id"),media_content_type:this._l("media_content_type"),image:this._l("image_url")},s={duration_min:this._l("duration_help"),media_content_id:this._l("media_content_id_help"),image:this._l("image_url_help")},r=e=>i[e.name]??e.name,o=e=>s[e.name],a=this._mediaDisplayName(e),n=this._coverDisplayName(e);return W`
       <div class="form-panel">
         <div class="form-title">
-          ${this._l(draft.id ? "edit_story" : "new_story")}
+          ${this._l(e.id?"edit_story":"new_story")}
         </div>
         <ha-form
           .hass=${this.hass}
-          .data=${draft}
-          .schema=${basicsSchema}
-          .computeLabel=${computeLabel}
-          .computeHelper=${computeHelper}
+          .data=${e}
+          .schema=${t}
+          .computeLabel=${r}
+          .computeHelper=${o}
           @value-changed=${this._storyFormChanged}
         ></ha-form>
 
@@ -1513,22 +213,18 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
           <div class="field-help">${this._l("media_help")}</div>
           <ha-form
             .hass=${this.hass}
-            .data=${draft}
-            .schema=${mediaSchema}
-            .computeLabel=${computeLabel}
+            .data=${e}
+            .schema=${[{name:"media",selector:{media:{accept:["audio/*"]}}}]}
+            .computeLabel=${r}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
-          ${this._renderUploadRow("media", "audio/*", this._uploadMediaFile)}
-          <div class="media-status ${draft.media_content_id ? "ok" : ""}">
+          ${this._renderUploadRow("media","audio/*",this._uploadMediaFile)}
+          <div class="media-status ${e.media_content_id?"ok":""}">
             <ha-icon
-              icon=${draft.media_content_id
-            ? "mdi:check-circle"
-            : "mdi:alert-circle-outline"}
+              icon=${e.media_content_id?"mdi:check-circle":"mdi:alert-circle-outline"}
             ></ha-icon>
             <span
-              >${draft.media_content_id
-            ? `${this._l("media_selected")}: ${mediaName}`
-            : this._l("media_none")}</span
+              >${e.media_content_id?`${this._l("media_selected")}: ${a}`:this._l("media_none")}</span
             >
           </div>
         </div>
@@ -1541,60 +237,52 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
           <div class="field-help">${this._l("cover_help")}</div>
           <ha-form
             .hass=${this.hass}
-            .data=${draft}
-            .schema=${coverSchema}
+            .data=${e}
+            .schema=${[{name:"cover_media",selector:{media:{accept:["image/*"]}}}]}
             .computeLabel=${this._noLabel}
             @value-changed=${this._storyFormChanged}
           ></ha-form>
-          ${this._renderUploadRow("cover", "image/*", this._uploadCoverFile)}
-          <div class="media-status ${draft.image ? "ok" : ""}">
+          ${this._renderUploadRow("cover","image/*",this._uploadCoverFile)}
+          <div class="media-status ${e.image?"ok":""}">
             <ha-icon
-              icon=${draft.image
-            ? "mdi:check-circle"
-            : "mdi:image-off-outline"}
+              icon=${e.image?"mdi:check-circle":"mdi:image-off-outline"}
             ></ha-icon>
             <span
-              >${draft.image
-            ? `${this._l("cover_selected")}: ${coverName}`
-            : this._l("cover_none")}</span
+              >${e.image?`${this._l("cover_selected")}: ${n}`:this._l("cover_none")}</span
             >
           </div>
         </div>
 
         <button
           class="advanced-toggle"
-          @click=${() => (this._storyAdvanced = !this._storyAdvanced)}
+          @click=${()=>this._storyAdvanced=!this._storyAdvanced}
         >
           <ha-icon
-            icon=${this._storyAdvanced
-            ? "mdi:chevron-down"
-            : "mdi:chevron-right"}
+            icon=${this._storyAdvanced?"mdi:chevron-down":"mdi:chevron-right"}
           ></ha-icon>
           ${this._l("advanced")}
         </button>
-        ${this._storyAdvanced
-            ? b `
+        ${this._storyAdvanced?W`
               <div class="advanced-body">
                 <ha-form
                   .hass=${this.hass}
-                  .data=${draft}
-                  .schema=${advancedSchema}
-                  .computeLabel=${computeLabel}
-                  .computeHelper=${computeHelper}
+                  .data=${e}
+                  .schema=${[{name:"media_content_id",selector:{text:{}}},{name:"media_content_type",selector:{text:{}}},{name:"image",selector:{text:{}}}]}
+                  .computeLabel=${r}
+                  .computeHelper=${o}
                   @value-changed=${this._storyFormChanged}
                 ></ha-form>
-                ${draft.id
-                ? b `
+                ${e.id?W`
                       <div class="story-id-row">
                         <span
                           >${this._l("story_id_hint")}:
-                          <code>${draft.id}</code></span
+                          <code>${e.id}</code></span
                         >
                       </div>
                       <div class="reset-stats-row">
                         <span class="reset-count">
                           <ha-icon icon="mdi:chart-line-variant"></ha-icon>
-                          ${this._playCountText(draft.id)}
+                          ${this._playCountText(e.id)}
                         </span>
                         <mwc-button
                           outlined
@@ -1605,25 +293,20 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
                           ${this._l("reset_stats")}
                         </mwc-button>
                       </div>
-                    `
-                : A}
+                    `:K}
               </div>
-            `
-            : A}
+            `:K}
 
         <div class="form-actions">
-          ${draft.id
-            ? b `<mwc-button raised @click=${this._doneStory}>
+          ${e.id?W`<mwc-button raised @click=${this._doneStory}>
                 ${this._l("done")}
-              </mwc-button>`
-            : b `
-                <mwc-button @click=${() => (this._storyDraft = null)}>
+              </mwc-button>`:W`
+                <mwc-button @click=${()=>this._storyDraft=null}>
                   ${this._l("cancel")}
                 </mwc-button>
                 <mwc-button
                   raised
-                  .disabled=${!draft.title.trim() ||
-                !draft.media_content_id.trim()}
+                  .disabled=${!e.title.trim()||!e.media_content_id.trim()}
                   @click=${this._saveStory}
                 >
                   ${this._l("save")}
@@ -1631,9 +314,7 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
               `}
         </div>
       </div>
-    `;
-    }
-    static { this.styles = i$5 `
+    `}static{this.styles=a`
     :host {
       display: block;
     }
@@ -1963,650 +644,40 @@ let BedtimeStoriesCardEditor = class BedtimeStoriesCardEditor extends i$2 {
       padding: 1px 5px;
       border-radius: 4px;
     }
-  `; }
-};
-__decorate([
-    n$1({ attribute: false })
-], BedtimeStoriesCardEditor.prototype, "hass", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_config", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_entries", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_library", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_covers", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_formReady", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_categoryDraft", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_storyDraft", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_storyAdvanced", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_error", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_uploading", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCardEditor.prototype, "_dragOverId", void 0);
-BedtimeStoriesCardEditor = BedtimeStoriesCardEditor_1 = __decorate([
-    t$1("bedtime-stories-card-editor")
-], BedtimeStoriesCardEditor);
-
-const SORT_MODES = [
-    "manual",
-    "alphabetical",
-    "play_count",
-    "last_played",
-];
-/** Chips that imply "most first" flip their default direction. */
-const DEFAULT_DESC = ["play_count", "last_played"];
-/** Media-player `supported_features` bits we care about. */
-const FEATURE_PAUSE = 1;
-const FEATURE_SEEK = 2;
-const FEATURE_PLAY = 16384;
-let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
-    constructor() {
-        super(...arguments);
-        /** story.id → resolved cover URL, for images stored as media-source ids. */
-        this._covers = {};
-        this._justPlayed = null;
-        /** "This device" mode: play the audio in the browser instead of casting. */
-        this._playHere = false;
-        this._localPlayingId = null;
-        this._localPaused = false;
-        this._localPos = 0;
-        this._localDur = 0;
-        /** While the user drags the seek slider, freeze the shown position. */
-        this._scrubbing = false;
-        this._scrubValue = 0;
-        this._onAudioMeta = () => {
-            const d = this._audioEl?.duration ?? 0;
-            this._localDur = Number.isFinite(d) ? d : 0;
-        };
-        this._onAudioTime = () => {
-            if (this._scrubbing)
-                return;
-            this._localPos = this._audioEl?.currentTime ?? 0;
-        };
-        this._onAudioPlay = () => {
-            this._localPaused = false;
-            void this._acquireWakeLock();
-        };
-        this._onAudioPause = () => {
-            this._localPaused = true;
-            this._releaseWakeLock();
-        };
-        this._onAudioEnded = () => {
-            this._localPlayingId = null;
-            this._localPaused = false;
-            this._localPos = 0;
-            this._releaseWakeLock();
-        };
-        this._onAudioError = () => {
-            this._localPlayingId = null;
-            this._releaseWakeLock();
-            if (this._playHere)
-                this._flashError(localize(this.hass, "play_failed"));
-        };
-        /** The lock is dropped when the screen turns off; re-take it once visible. */
-        this._onVisibility = () => {
-            if (document.visibilityState === "visible" &&
-                this._localPlayingId &&
-                !this._localPaused) {
-                void this._acquireWakeLock();
-            }
-        };
-    }
-    static getConfigElement() {
-        return document.createElement("bedtime-stories-card-editor");
-    }
-    static getStubConfig() {
-        return { title: "Bedtime Stories" };
-    }
-    setConfig(config) {
-        this._config = { ...DEFAULT_CONFIG, ...config };
-        this._localSort = this._loadLocalSort();
-        this._playHere = this._loadPlayHere();
-        this._resubscribe();
-    }
-    getCardSize() {
-        const stories = this._library?.stories.length ?? 6;
-        return 2 + Math.ceil(stories / 3) * 2;
-    }
-    /** Sections view: span the full width by default (resizable by the user). */
-    getGridOptions() {
-        return { columns: "full", rows: "auto" };
-    }
-    getLayoutOptions() {
-        return { grid_columns: "full", grid_rows: "auto" };
-    }
-    connectedCallback() {
-        super.connectedCallback();
-        this._resubscribe();
-        document.addEventListener("visibilitychange", this._onVisibility);
-    }
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        this._teardown();
-        this._stopLocal();
-        document.removeEventListener("visibilitychange", this._onVisibility);
-        this._stopPositionTimer();
-    }
-    updated() {
-        if (this.hass && !this._unsubscribe) {
-            this._resubscribe();
-        }
-        this._syncPositionTimer();
-    }
-    _teardown() {
-        this._unsubscribe?.then((unsub) => unsub()).catch(() => undefined);
-        this._unsubscribe = undefined;
-        this._subscribedEntry = undefined;
-    }
-    _resubscribe() {
-        if (!this.hass || !this._config || !this.isConnected)
-            return;
-        const entry = this._config.entry_id ?? "";
-        if (this._unsubscribe && this._subscribedEntry === entry)
-            return;
-        this._teardown();
-        this._subscribedEntry = entry;
-        this._unsubscribe = subscribeLibrary(this.hass, (snapshot) => {
-            this._library = snapshot;
-            this._error = undefined;
-            void this._resolveCovers(snapshot);
-        }, this._config.entry_id);
-        this._unsubscribe.catch((err) => {
-            this._unsubscribe = undefined;
-            this._error = err?.message ?? "unknown error";
-        });
-    }
-    // ---- sorting -------------------------------------------------------------
-    _sortStorageKey() {
-        return `bedtime-stories-sort:${this._config?.entry_id ?? "default"}`;
-    }
-    _loadLocalSort() {
-        if (!this._config?.show_sort_selector)
-            return undefined;
-        try {
-            const raw = window.localStorage.getItem(this._sortStorageKey());
-            return raw ? JSON.parse(raw) : undefined;
-        }
-        catch {
-            return undefined;
-        }
-    }
-    // ---- "this device" playback ----------------------------------------------
-    _deviceStorageKey() {
-        return `bedtime-stories-here:${this._config?.entry_id ?? "default"}`;
-    }
-    _loadPlayHere() {
-        try {
-            return window.localStorage.getItem(this._deviceStorageKey()) === "1";
-        }
-        catch {
-            return false;
-        }
-    }
-    _togglePlayHere() {
-        this._playHere = !this._playHere;
-        try {
-            window.localStorage.setItem(this._deviceStorageKey(), this._playHere ? "1" : "0");
-        }
-        catch {
-            // private mode etc. — still works for this session
-        }
-        if (!this._playHere)
-            this._stopLocal();
-    }
-    _stopLocal() {
-        this._audioEl?.pause();
-        this._localPlayingId = null;
-        this._localPaused = false;
-        this._localPos = 0;
-        this._localDur = 0;
-        this._releaseWakeLock();
-    }
-    // ---- screen wake lock (keep the device awake while playing locally) -------
-    async _acquireWakeLock() {
-        if (this._config?.keep_awake === false)
-            return;
-        const nav = navigator;
-        if (!nav.wakeLock || this._wakeLock)
-            return;
-        try {
-            const lock = await nav.wakeLock.request("screen");
-            this._wakeLock = lock;
-            lock.addEventListener("release", () => {
-                if (this._wakeLock === lock)
-                    this._wakeLock = undefined;
-            });
-        }
-        catch {
-            // Denied (page hidden / unsupported) — playback still works.
-        }
-    }
-    _releaseWakeLock() {
-        this._wakeLock?.release().catch(() => undefined);
-        this._wakeLock = undefined;
-    }
-    // ---- external-player position ticker --------------------------------------
-    _syncPositionTimer() {
-        const active = this._activePlayback();
-        const needsTick = !!active &&
-            !active.local &&
-            active.playing &&
-            this._config?.show_now_playing !== false &&
-            !this._scrubbing;
-        if (needsTick && this._positionTimer === undefined) {
-            this._positionTimer = window.setInterval(() => this.requestUpdate(), 1000);
-        }
-        else if (!needsTick) {
-            this._stopPositionTimer();
-        }
-    }
-    _stopPositionTimer() {
-        if (this._positionTimer !== undefined) {
-            window.clearInterval(this._positionTimer);
-            this._positionTimer = undefined;
-        }
-    }
-    _activeSort() {
-        if (this._config?.show_sort_selector && this._localSort) {
-            return this._localSort;
-        }
-        return {
-            sort: this._config?.sort ?? "manual",
-            direction: this._config?.sort_direction ?? "asc",
-        };
-    }
-    _pickSort(mode) {
-        const current = this._activeSort();
-        const choice = current.sort === mode
-            ? {
-                sort: mode,
-                direction: current.direction === "asc" ? "desc" : "asc",
-            }
-            : {
-                sort: mode,
-                direction: DEFAULT_DESC.includes(mode) ? "desc" : "asc",
-            };
-        this._localSort = choice;
-        try {
-            window.localStorage.setItem(this._sortStorageKey(), JSON.stringify(choice));
-        }
-        catch {
-            // private mode etc. — sorting still works for this session
-        }
-    }
-    _sortedStories(category) {
-        const lib = this._library;
-        if (!lib)
-            return [];
-        const { sort, direction } = this._activeSort();
-        const stories = lib.stories.filter((s) => s.category_id === category.id);
-        const stat = (id) => lib.stats[id];
-        stories.sort((a, b) => {
-            let cmp = 0;
-            switch (sort) {
-                case "alphabetical":
-                    cmp = a.title.localeCompare(b.title, undefined, {
-                        sensitivity: "base",
-                    });
-                    break;
-                case "play_count":
-                    cmp = (stat(a.id)?.play_count ?? 0) - (stat(b.id)?.play_count ?? 0);
-                    break;
-                case "last_played": {
-                    const ta = Date.parse(stat(a.id)?.last_played ?? "") || 0;
-                    const tb = Date.parse(stat(b.id)?.last_played ?? "") || 0;
-                    cmp = ta - tb;
-                    break;
-                }
-                default:
-                    cmp = a.order - b.order;
-            }
-            if (cmp === 0) {
-                cmp = a.title.localeCompare(b.title, undefined, {
-                    sensitivity: "base",
-                });
-            }
-            return direction === "desc" ? -cmp : cmp;
-        });
-        return stories;
-    }
-    // ---- players ---------------------------------------------------------------
-    _targetPlayer() {
-        if (this._config?.player_mode === "fixed" && this._config.media_player) {
-            return this._config.media_player;
-        }
-        const lib = this._library;
-        if (lib?.select_entity && this.hass?.states[lib.select_entity]) {
-            const option = this.hass.states[lib.select_entity].state;
-            if (option && option !== "unknown" && option !== "unavailable") {
-                return option;
-            }
-        }
-        return lib?.current_player ?? undefined;
-    }
-    _playerName(entityId) {
-        if (!entityId)
-            return undefined;
-        const info = this._library?.players.find((p) => p.entity_id === entityId);
-        if (info)
-            return info.name;
-        const st = this.hass?.states[entityId];
-        return (st?.attributes.friendly_name ?? entityId);
-    }
-    _cyclePlayer() {
-        const lib = this._library;
-        if (!this.hass || !lib?.select_entity || lib.players.length < 2)
-            return;
-        const current = this._targetPlayer();
-        const idx = lib.players.findIndex((p) => p.entity_id === current);
-        const next = lib.players[(idx + 1) % lib.players.length];
-        void this.hass.callService("select", "select_option", {
-            entity_id: lib.select_entity,
-            option: next.entity_id,
-        });
-    }
-    /** Whatever is currently loaded on the active target, unified across modes. */
-    _activePlayback() {
-        const lib = this._library;
-        if (!lib || !this.hass)
-            return null;
-        if (this._playHere) {
-            if (!this._localPlayingId)
-                return null;
-            const story = lib.stories.find((s) => s.id === this._localPlayingId);
-            if (!story)
-                return null;
-            const dur = Number.isFinite(this._localDur) ? this._localDur : 0;
-            return {
-                story,
-                local: true,
-                playing: !this._localPaused,
-                position: this._localPos,
-                duration: dur > 0 ? dur : 0,
-                canSeek: dur > 0,
-                canPause: true,
-            };
-        }
-        const player = this._targetPlayer();
-        const st = player ? this.hass.states[player] : undefined;
-        if (!st || (st.state !== "playing" && st.state !== "paused"))
-            return null;
-        const title = st.attributes.media_title;
-        if (!title)
-            return null;
-        const story = lib.stories.find((s) => s.title === title);
-        if (!story)
-            return null;
-        const duration = Number(st.attributes.media_duration) || 0;
-        let position = Number(st.attributes.media_position) || 0;
-        const updatedAt = st.attributes.media_position_updated_at;
-        if (st.state === "playing" && updatedAt) {
-            position += (Date.now() - Date.parse(updatedAt)) / 1000;
-        }
-        if (duration > 0)
-            position = Math.min(position, duration);
-        const feat = Number(st.attributes.supported_features) || 0;
-        return {
-            story,
-            local: false,
-            playing: st.state === "playing",
-            position: Math.max(0, position),
-            duration,
-            canSeek: (feat & FEATURE_SEEK) !== 0 && duration > 0,
-            canPause: (feat & FEATURE_PAUSE) !== 0 || (feat & FEATURE_PLAY) !== 0,
-        };
-    }
-    _togglePlayPause(active) {
-        if (active.local) {
-            const audio = this._audioEl;
-            if (!audio)
-                return;
-            if (audio.paused)
-                void audio.play().catch(() => undefined);
-            else
-                audio.pause();
-            return;
-        }
-        const player = this._targetPlayer();
-        if (!player || !this.hass)
-            return;
-        void this.hass.callService("media_player", active.playing ? "media_pause" : "media_play", { entity_id: player });
-    }
-    _onScrub(ev) {
-        this._scrubbing = true;
-        this._scrubValue = Number(ev.target.value);
-    }
-    _onSeek(ev, active) {
-        const value = Number(ev.target.value);
-        this._scrubbing = false;
-        if (active.local) {
-            if (this._audioEl)
-                this._audioEl.currentTime = value;
-            this._localPos = value;
-            return;
-        }
-        const player = this._targetPlayer();
-        if (player && this.hass) {
-            void this.hass.callService("media_player", "media_seek", {
-                entity_id: player,
-                seek_position: value,
-            });
-        }
-    }
-    _fmtTime(sec) {
-        const total = Number.isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
-        const m = Math.floor(total / 60);
-        const r = total % 60;
-        return `${m}:${r.toString().padStart(2, "0")}`;
-    }
-    // ---- actions ----------------------------------------------------------------
-    _flashError(message) {
-        this._error = message;
-        window.setTimeout(() => {
-            this._error = undefined;
-        }, 4000);
-    }
-    async _play(story) {
-        if (!this.hass)
-            return;
-        if (this._playHere) {
-            await this._playLocal(story);
-            return;
-        }
-        this._justPlayed = story.id;
-        window.setTimeout(() => {
-            if (this._justPlayed === story.id)
-                this._justPlayed = null;
-        }, 1600);
-        try {
-            await playStory(this.hass, story.id, this._config?.player_mode === "fixed"
-                ? this._config.media_player
-                : undefined, this._config?.entry_id);
-        }
-        catch (err) {
-            this._justPlayed = null;
-            this._flashError(err?.message ?? "play failed");
-        }
-    }
-    /** Resolve a story's media id into a URL the browser can play. */
-    async _resolveMediaUrl(mediaId) {
-        if (!this.hass)
-            return null;
-        if (!isMediaSource(mediaId))
-            return mediaId;
-        try {
-            const { url } = await resolveMediaSource(this.hass, mediaId);
-            return url;
-        }
-        catch {
-            return null;
-        }
-    }
-    /** Play a story's audio in this browser tab (companion app included). */
-    async _playLocal(story) {
-        const audio = this._audioEl;
-        if (!audio || !this.hass)
-            return;
-        // Tapping the currently playing tile stops it.
-        if (this._localPlayingId === story.id && !audio.paused) {
-            this._stopLocal();
-            return;
-        }
-        this._justPlayed = story.id;
-        window.setTimeout(() => {
-            if (this._justPlayed === story.id)
-                this._justPlayed = null;
-        }, 1600);
-        const url = await this._resolveMediaUrl(story.media_content_id);
-        if (!url) {
-            this._justPlayed = null;
-            this._flashError(localize(this.hass, "play_failed"));
-            return;
-        }
-        try {
-            this._localPos = 0;
-            this._localDur = 0;
-            this._localPaused = false;
-            audio.src = url;
-            await audio.play();
-            this._localPlayingId = story.id;
-            // Count the play (stats + logbook) without casting to a media player.
-            void recordPlay(this.hass, story.id, localize(this.hass, "this_device"), this._config?.entry_id).catch(() => undefined);
-        }
-        catch {
-            // Autoplay blocked or codec unsupported — a second tap usually works.
-            this._justPlayed = null;
-            this._localPlayingId = null;
-        }
-    }
-    // ---- rendering ----------------------------------------------------------------
-    _visibleCategories() {
-        const lib = this._library;
-        if (!lib)
-            return [];
-        const filter = this._config?.categories ?? [];
-        return lib.categories.filter((c) => filter.length === 0 || filter.includes(c.id));
-    }
-    /** Resolve any media-source cover ids into displayable URLs. */
-    async _resolveCovers(lib) {
-        if (!this.hass)
-            return;
-        const updates = {};
-        await Promise.all(lib.stories.map(async (story) => {
-            if (!isMediaSource(story.image))
-                return;
-            const url = await resolveImage(this.hass, story.image);
-            if (url && url !== this._covers[story.id])
-                updates[story.id] = url;
-        }));
-        if (Object.keys(updates).length) {
-            this._covers = { ...this._covers, ...updates };
-        }
-    }
-    /** Direct URLs pass through; media-source ids use the resolved cache. */
-    _coverUrl(story) {
-        if (!story.image)
-            return null;
-        if (isMediaSource(story.image))
-            return this._covers[story.id] ?? null;
-        return story.image;
-    }
-    _statsLine(story) {
-        const stats = this._library?.stats[story.id];
-        if (!stats || stats.play_count === 0) {
-            return localize(this.hass, "played_never");
-        }
-        const count = stats.play_count === 1
-            ? localize(this.hass, "played_once")
-            : localize(this.hass, "played_times", { count: stats.play_count });
-        return stats.last_played
-            ? `${count} · ${relativeTime(this.hass, stats.last_played)}`
-            : count;
-    }
-    render() {
-        const config = this._config;
-        if (!config)
-            return b ``;
-        if (this._error && !this._library) {
-            return b `<ha-card
-        ><div class="empty">${localize(this.hass, "not_configured")}</div>
-      </ha-card>`;
-        }
-        const categories = this._visibleCategories();
-        // Density only applies to the list layout; grid tiles scale via columns.
-        const compact = config.layout === "list" && config.density === "compact";
-        const active = this._activePlayback();
-        const activeId = active?.story.id ?? null;
-        const playingNow = active?.playing ? active.story.id : null;
-        const player = this._targetPlayer();
-        const showChip = config.show_player !== false &&
-            config.player_mode !== "fixed" &&
-            (this._library?.players.length ?? 0) > 0;
-        return b `
-      <ha-card class=${e({ compact })}>
+  `}};e([pe({attribute:!1})],Me.prototype,"hass",void 0),e([_e()],Me.prototype,"_config",void 0),e([_e()],Me.prototype,"_entries",void 0),e([_e()],Me.prototype,"_library",void 0),e([_e()],Me.prototype,"_covers",void 0),e([_e()],Me.prototype,"_formReady",void 0),e([_e()],Me.prototype,"_categoryDraft",void 0),e([_e()],Me.prototype,"_storyDraft",void 0),e([_e()],Me.prototype,"_storyAdvanced",void 0),e([_e()],Me.prototype,"_error",void 0),e([_e()],Me.prototype,"_uploading",void 0),e([_e()],Me.prototype,"_dragOverId",void 0),Me=Le=e([le("bedtime-stories-card-editor")],Me);const Ie=["manual","alphabetical","play_count","last_played"],Re=["play_count","last_played"];let Ue=class extends ne{constructor(){super(...arguments),this._covers={},this._justPlayed=null,this._playHere=!1,this._localPlayingId=null,this._localPaused=!1,this._localPos=0,this._localDur=0,this._scrubbing=!1,this._scrubValue=0,this._onAudioMeta=()=>{const e=this._audioEl?.duration??0;this._localDur=Number.isFinite(e)?e:0},this._onAudioTime=()=>{this._scrubbing||(this._localPos=this._audioEl?.currentTime??0)},this._onAudioPlay=()=>{this._localPaused=!1,this._acquireWakeLock()},this._onAudioPause=()=>{this._localPaused=!0,this._releaseWakeLock()},this._onAudioEnded=()=>{this._localPlayingId=null,this._localPaused=!1,this._localPos=0,this._releaseWakeLock()},this._onAudioError=()=>{this._localPlayingId=null,this._releaseWakeLock(),this._playHere&&this._flashError(Ee(this.hass,"play_failed"))},this._onVisibility=()=>{"visible"===document.visibilityState&&this._localPlayingId&&!this._localPaused&&this._acquireWakeLock()}}static getConfigElement(){return document.createElement("bedtime-stories-card-editor")}static getStubConfig(){return{title:"Bedtime Stories"}}setConfig(e){if(!e||"object"!=typeof e)throw new Error("Invalid configuration");if(e.layout&&"grid"!==e.layout&&"list"!==e.layout)throw new Error('layout must be "grid" or "list"');if("fixed"===e.player_mode&&!e.media_player)throw new Error('player_mode "fixed" requires a media_player');this._config={...Te,...e},this._localSort=this._loadLocalSort(),this._playHere=this._loadPlayHere(),this._resubscribe()}getCardSize(){const e=this._library?.stories.length??6;return 2+2*Math.ceil(e/3)}getGridOptions(){return{columns:"full",rows:"auto"}}getLayoutOptions(){return{grid_columns:"full",grid_rows:"auto"}}connectedCallback(){super.connectedCallback(),this._resubscribe(),document.addEventListener("visibilitychange",this._onVisibility)}disconnectedCallback(){super.disconnectedCallback(),this._teardown(),this._stopLocal(),document.removeEventListener("visibilitychange",this._onVisibility),this._stopPositionTimer()}updated(){this.hass&&!this._unsubscribe&&this._resubscribe(),this._syncPositionTimer()}_teardown(){this._unsubscribe?.then(e=>e()).catch(()=>{}),this._unsubscribe=void 0,this._subscribedEntry=void 0}_resubscribe(){if(!this.hass||!this._config||!this.isConnected)return;const e=this._config.entry_id??"";this._unsubscribe&&this._subscribedEntry===e||(this._teardown(),this._subscribedEntry=e,this._unsubscribe=ke(this.hass,e=>{this._library=e,this._error=void 0,this._resolveCovers(e)},this._config.entry_id),this._unsubscribe.catch(e=>{this._unsubscribe=void 0,this._error=e?.message??"unknown error"}))}_sortStorageKey(){return`bedtime-stories-sort:${this._config?.entry_id??"default"}`}_loadLocalSort(){if(this._config?.show_sort_selector)try{const e=window.localStorage.getItem(this._sortStorageKey());return e?JSON.parse(e):void 0}catch{return}}_deviceStorageKey(){return`bedtime-stories-here:${this._config?.entry_id??"default"}`}_loadPlayHere(){try{return"1"===window.localStorage.getItem(this._deviceStorageKey())}catch{return!1}}_togglePlayHere(){this._playHere=!this._playHere;try{window.localStorage.setItem(this._deviceStorageKey(),this._playHere?"1":"0")}catch{}this._playHere||this._stopLocal()}_stopLocal(){this._audioEl?.pause(),this._localPlayingId=null,this._localPaused=!1,this._localPos=0,this._localDur=0,this._releaseWakeLock()}async _acquireWakeLock(){if(!1===this._config?.keep_awake)return;const e=navigator;if(e.wakeLock&&!this._wakeLock)try{const t=await e.wakeLock.request("screen");this._wakeLock=t,t.addEventListener("release",()=>{this._wakeLock===t&&(this._wakeLock=void 0)})}catch{}}_releaseWakeLock(){this._wakeLock?.release().catch(()=>{}),this._wakeLock=void 0}_syncPositionTimer(){const e=this._activePlayback(),t=!!e&&!e.local&&e.playing&&!1!==this._config?.show_now_playing&&!this._scrubbing;t&&void 0===this._positionTimer?this._positionTimer=window.setInterval(()=>this.requestUpdate(),1e3):t||this._stopPositionTimer()}_stopPositionTimer(){void 0!==this._positionTimer&&(window.clearInterval(this._positionTimer),this._positionTimer=void 0)}_activeSort(){return this._config?.show_sort_selector&&this._localSort?this._localSort:{sort:this._config?.sort??"manual",direction:this._config?.sort_direction??"asc"}}_pickSort(e){const t=this._activeSort(),i=t.sort===e?{sort:e,direction:"asc"===t.direction?"desc":"asc"}:{sort:e,direction:Re.includes(e)?"desc":"asc"};this._localSort=i;try{window.localStorage.setItem(this._sortStorageKey(),JSON.stringify(i))}catch{}}_sortedStories(e){const t=this._library;if(!t)return[];const{sort:i,direction:s}=this._activeSort(),r=t.stories.filter(t=>t.category_id===e.id),o=e=>t.stats[e];return r.sort((e,t)=>{let r=0;switch(i){case"alphabetical":r=e.title.localeCompare(t.title,void 0,{sensitivity:"base"});break;case"play_count":r=(o(e.id)?.play_count??0)-(o(t.id)?.play_count??0);break;case"last_played":r=(Date.parse(o(e.id)?.last_played??"")||0)-(Date.parse(o(t.id)?.last_played??"")||0);break;default:r=e.order-t.order}return 0===r&&(r=e.title.localeCompare(t.title,void 0,{sensitivity:"base"})),"desc"===s?-r:r}),r}_targetPlayer(){if("fixed"===this._config?.player_mode&&this._config.media_player)return this._config.media_player;const e=this._library;if(e?.select_entity&&this.hass?.states[e.select_entity]){const t=this.hass.states[e.select_entity].state;if(t&&"unknown"!==t&&"unavailable"!==t)return t}return e?.current_player??void 0}_playerName(e){if(!e)return;const t=this._library?.players.find(t=>t.entity_id===e);if(t)return t.name;const i=this.hass?.states[e];return i?.attributes.friendly_name??e}_cyclePlayer(){const e=this._library;if(!this.hass||!e?.select_entity||e.players.length<2)return;const t=this._targetPlayer(),i=e.players.findIndex(e=>e.entity_id===t),s=e.players[(i+1)%e.players.length];this.hass.callService("select","select_option",{entity_id:e.select_entity,option:s.entity_id})}_activePlayback(){const e=this._library;if(!e||!this.hass)return null;if(this._playHere){if(!this._localPlayingId)return null;const t=e.stories.find(e=>e.id===this._localPlayingId);if(!t)return null;const i=Number.isFinite(this._localDur)?this._localDur:0;return{story:t,local:!0,playing:!this._localPaused,position:this._localPos,duration:i>0?i:0,canSeek:i>0,canPause:!0}}const t=this._targetPlayer(),i=t?this.hass.states[t]:void 0;if(!i||"playing"!==i.state&&"paused"!==i.state)return null;const s=i.attributes.media_title;if(!s)return null;const r=e.stories.find(e=>e.title===s);if(!r)return null;const o=Number(i.attributes.media_duration)||0;let a=Number(i.attributes.media_position)||0;const n=i.attributes.media_position_updated_at;"playing"===i.state&&n&&(a+=(Date.now()-Date.parse(n))/1e3),o>0&&(a=Math.min(a,o));const c=Number(i.attributes.supported_features)||0;return{story:r,local:!1,playing:"playing"===i.state,position:Math.max(0,a),duration:o,canSeek:!!(2&c)&&o>0,canPause:!!(1&c)||!!(16384&c)}}_togglePlayPause(e){if(e.local){const e=this._audioEl;if(!e)return;return void(e.paused?e.play().catch(()=>{}):e.pause())}const t=this._targetPlayer();t&&this.hass&&this.hass.callService("media_player",e.playing?"media_pause":"media_play",{entity_id:t})}_onScrub(e){this._scrubbing=!0,this._scrubValue=Number(e.target.value)}_onSeek(e,t){const i=Number(e.target.value);if(this._scrubbing=!1,t.local)return this._audioEl&&(this._audioEl.currentTime=i),void(this._localPos=i);const s=this._targetPlayer();s&&this.hass&&this.hass.callService("media_player","media_seek",{entity_id:s,seek_position:i})}_fmtTime(e){const t=Number.isFinite(e)&&e>0?Math.floor(e):0;return`${Math.floor(t/60)}:${(t%60).toString().padStart(2,"0")}`}_flashError(e){this._error=e,window.setTimeout(()=>{this._error=void 0},4e3)}async _play(e){if(this.hass)if(this._playHere)await this._playLocal(e);else{this._justPlayed=e.id,window.setTimeout(()=>{this._justPlayed===e.id&&(this._justPlayed=null)},1600);try{await(t=this.hass,i=e.id,s="fixed"===this._config?.player_mode?this._config.media_player:void 0,r=this._config?.entry_id,t.callWS(we({type:`${$e}/play`,story_id:i,...s?{media_player:s}:{}},r)))}catch(e){this._justPlayed=null,this._flashError(e?.message??"play failed")}var t,i,s,r}}async _resolveMediaUrl(e){if(!this.hass)return null;if(!Pe(e))return e;try{const{url:t}=await xe(this.hass,e);return t}catch{return null}}async _playLocal(e){const t=this._audioEl;if(!t||!this.hass)return;if(this._localPlayingId===e.id&&!t.paused)return void this._stopLocal();this._justPlayed=e.id,window.setTimeout(()=>{this._justPlayed===e.id&&(this._justPlayed=null)},1600);const i=await this._resolveMediaUrl(e.media_content_id);if(!i)return this._justPlayed=null,void this._flashError(Ee(this.hass,"play_failed"));try{this._localPos=0,this._localDur=0,this._localPaused=!1,t.src=i,await t.play(),this._localPlayingId=e.id,(s=this.hass,r=e.id,o=Ee(this.hass,"this_device"),a=this._config?.entry_id,s.callWS(we({type:`${$e}/play`,story_id:r,record_only:!0,source:o},a))).catch(()=>{})}catch{this._justPlayed=null,this._localPlayingId=null}var s,r,o,a}_visibleCategories(){const e=this._library;if(!e)return[];const t=this._config?.categories??[];return e.categories.filter(e=>0===t.length||t.includes(e.id))}async _resolveCovers(e){if(!this.hass)return;const t={};await Promise.all(e.stories.map(async e=>{if(!Pe(e.image))return;const i=await ze(this.hass,e.image);i&&i!==this._covers[e.id]&&(t[e.id]=i)})),Object.keys(t).length&&(this._covers={...this._covers,...t})}_coverUrl(e){return e.image?Pe(e.image)?this._covers[e.id]??null:e.image:null}_statsLine(e){const t=this._library?.stats[e.id];if(!t||0===t.play_count)return Ee(this.hass,"played_never");const i=1===t.play_count?Ee(this.hass,"played_once"):Ee(this.hass,"played_times",{count:t.play_count});return t.last_played?`${i} · ${function(e,t){const i=e?.locale?.language??e?.language??"en",s=new Date(t).getTime();if(Number.isNaN(s))return t;const r=Math.round((s-Date.now())/1e3),o=new Intl.RelativeTimeFormat(i,{numeric:"auto"}),a=[["year",31536e3],["month",2592e3],["week",604800],["day",86400],["hour",3600],["minute",60]];for(const[e,t]of a)if(Math.abs(r)>=t)return o.format(Math.round(r/t),e);return o.format(0,"minute")}(this.hass,t.last_played)}`:i}render(){const e=this._config;if(!e)return W``;if(this._error&&!this._library)return W`<ha-card
+        ><div class="empty">${Ee(this.hass,"not_configured")}</div>
+      </ha-card>`;const t=this._visibleCategories(),i="list"===e.layout&&"compact"===e.density,s=this._activePlayback(),r=s?.story.id??null,o=s?.playing?s.story.id:null,a=this._targetPlayer(),n=!1!==e.show_player&&"fixed"!==e.player_mode&&(this._library?.players.length??0)>0;return W`
+      <ha-card class=${ge({compact:i})}>
         <div class="header">
-          ${config.title ? b `<h1>${config.title}</h1>` : A}
+          ${e.title?W`<h1>${e.title}</h1>`:K}
           <div class="header-chips">
-            ${config.show_device_toggle !== false
-            ? b `<button
-                  class=${e({
-                "player-chip": true,
-                "device-chip": true,
-                active: this._playHere,
-            })}
-                  title=${localize(this.hass, "this_device")}
+            ${!1!==e.show_device_toggle?W`<button
+                  class=${ge({"player-chip":!0,"device-chip":!0,active:this._playHere})}
+                  title=${Ee(this.hass,"this_device")}
                   @click=${this._togglePlayHere}
                 >
                   <ha-icon icon="mdi:cellphone-play"></ha-icon>
-                  <span>${localize(this.hass, "this_device")}</span>
-                </button>`
-            : A}
-            ${showChip && !this._playHere
-            ? b `<button
+                  <span>${Ee(this.hass,"this_device")}</span>
+                </button>`:K}
+            ${n&&!this._playHere?W`<button
                   class="player-chip"
-                  title=${this._library?.select_entity ?? ""}
+                  title=${this._library?.select_entity??""}
                   @click=${this._cyclePlayer}
                 >
                   <ha-icon icon="mdi:cast-audio"></ha-icon>
                   <span
-                    >${this._playerName(player) ??
-                localize(this.hass, "no_player")}</span
+                    >${this._playerName(a)??Ee(this.hass,"no_player")}</span
                   >
-                </button>`
-            : A}
+                </button>`:K}
           </div>
         </div>
-        ${config.show_sort_selector ? this._renderSortChips() : A}
-        ${config.show_now_playing !== false && active
-            ? this._renderNowPlaying(active)
-            : A}
-        ${this._error
-            ? b `<div class="error">${this._error}</div>`
-            : A}
-        ${categories.length === 0
-            ? b `<div class="empty">
+        ${e.show_sort_selector?this._renderSortChips():K}
+        ${!1!==e.show_now_playing&&s?this._renderNowPlaying(s):K}
+        ${this._error?W`<div class="error">${this._error}</div>`:K}
+        ${0===t.length?W`<div class="empty">
               <ha-icon icon="mdi:sleep"></ha-icon>
-              ${localize(this.hass, "empty")}
-            </div>`
-            : categories.map((category) => this._renderCategory(category, activeId, playingNow))}
+              ${Ee(this.hass,"empty")}
+            </div>`:t.map(e=>this._renderCategory(e,r,o))}
         <audio
           @loadedmetadata=${this._onAudioMeta}
           @timeupdate=${this._onAudioTime}
@@ -2616,189 +687,119 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
           @error=${this._onAudioError}
         ></audio>
       </ha-card>
-    `;
-    }
-    _renderSortChips() {
-        const active = this._activeSort();
-        return b `
+    `}_renderSortChips(){const e=this._activeSort();return W`
       <div class="sort-chips">
-        ${SORT_MODES.map((mode) => b `
+        ${Ie.map(t=>W`
             <button
-              class=${e({ chip: true, active: active.sort === mode })}
-              @click=${() => this._pickSort(mode)}
+              class=${ge({chip:!0,active:e.sort===t})}
+              @click=${()=>this._pickSort(t)}
             >
-              ${localize(this.hass, `sort_${mode}`)}
-              ${active.sort === mode
-            ? b `<ha-icon
-                    icon=${active.direction === "asc"
-                ? "mdi:arrow-up-thin"
-                : "mdi:arrow-down-thin"}
-                  ></ha-icon>`
-            : A}
+              ${Ee(this.hass,`sort_${t}`)}
+              ${e.sort===t?W`<ha-icon
+                    icon=${"asc"===e.direction?"mdi:arrow-up-thin":"mdi:arrow-down-thin"}
+                  ></ha-icon>`:K}
             </button>
           `)}
       </div>
-    `;
-    }
-    _renderNowPlaying(active) {
-        const cover = this._coverUrl(active.story);
-        const dur = active.duration;
-        const pos = this._scrubbing ? this._scrubValue : active.position;
-        return b `
+    `}_renderNowPlaying(e){const t=this._coverUrl(e.story),i=e.duration,s=this._scrubbing?this._scrubValue:e.position;return W`
       <div class="now-playing">
         <span
           class="np-cover"
-          style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
+          style=${be(t?{backgroundImage:`url("${t}")`}:{})}
         >
-          ${!cover
-            ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
-            : A}
+          ${t?K:W`<ha-icon icon="mdi:book-open-variant"></ha-icon>`}
         </span>
         <div class="np-main">
-          <span class="np-title">${active.story.title}</span>
+          <span class="np-title">${e.story.title}</span>
           <div class="np-seek">
-            <span class="np-time">${this._fmtTime(pos)}</span>
-            ${dur > 0
-            ? b `<input
+            <span class="np-time">${this._fmtTime(s)}</span>
+            ${i>0?W`<input
                   class="np-range"
                   type="range"
                   min="0"
-                  max=${String(Math.ceil(dur))}
+                  max=${String(Math.ceil(i))}
                   step="1"
-                  .value=${String(Math.floor(pos))}
-                  ?disabled=${!active.canSeek}
-                  aria-label=${localize(this.hass, "now_playing")}
-                  @input=${(e) => this._onScrub(e)}
-                  @change=${(e) => this._onSeek(e, active)}
-                />`
-            : b `<span class="np-track"></span>`}
+                  .value=${String(Math.floor(s))}
+                  ?disabled=${!e.canSeek}
+                  aria-label=${Ee(this.hass,"now_playing")}
+                  @input=${e=>this._onScrub(e)}
+                  @change=${t=>this._onSeek(t,e)}
+                />`:W`<span class="np-track"></span>`}
             <span class="np-time"
-              >${dur > 0 ? this._fmtTime(dur) : "–:–"}</span
+              >${i>0?this._fmtTime(i):"–:–"}</span
             >
           </div>
         </div>
         <button
           class="np-btn"
-          ?disabled=${!active.canPause}
-          title=${localize(this.hass, active.playing ? "pause" : "resume")}
-          @click=${() => this._togglePlayPause(active)}
+          ?disabled=${!e.canPause}
+          title=${Ee(this.hass,e.playing?"pause":"resume")}
+          @click=${()=>this._togglePlayPause(e)}
         >
           <ha-icon
-            icon=${active.playing ? "mdi:pause" : "mdi:play"}
+            icon=${e.playing?"mdi:pause":"mdi:play"}
           ></ha-icon>
         </button>
       </div>
-    `;
-    }
-    _renderCategory(category, activeId, playingNow) {
-        const stories = this._sortedStories(category);
-        if (stories.length === 0)
-            return b ``;
-        const config = this._config;
-        const grid = config.layout !== "list";
-        const columns = config.columns ?? 0;
-        const gridStyle = grid && columns > 0
-            ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
-            : {};
-        return b `
+    `}_renderCategory(e,t,i){const s=this._sortedStories(e);if(0===s.length)return W``;const r=this._config,o="list"!==r.layout,a=r.columns??0,n=o&&a>0?{gridTemplateColumns:`repeat(${a}, 1fr)`}:{};return W`
       <div class="category">
         <div class="category-header">
-          <ha-icon icon=${category.icon || "mdi:teddy-bear"}></ha-icon>
-          <span>${category.name}</span>
+          <ha-icon icon=${e.icon||"mdi:teddy-bear"}></ha-icon>
+          <span>${e.name}</span>
         </div>
         <div
-          class=${e({ tiles: grid, rows: !grid })}
-          style=${o(gridStyle)}
+          class=${ge({tiles:o,rows:!o})}
+          style=${be(n)}
         >
-          ${stories.map((story) => grid
-            ? this._renderTile(story, activeId, playingNow)
-            : this._renderRow(story, activeId, playingNow))}
+          ${s.map(e=>o?this._renderTile(e,t,i):this._renderRow(e,t,i))}
         </div>
       </div>
-    `;
-    }
-    _renderTile(story, activeId, playingNow) {
-        const config = this._config;
-        const isActive = activeId === story.id;
-        const isPlaying = playingNow === story.id;
-        const justPlayed = this._justPlayed === story.id;
-        const cover = this._coverUrl(story);
-        return b `
+    `}_renderTile(e,t,i){const s=this._config,r=t===e.id,o=i===e.id,a=this._justPlayed===e.id,n=this._coverUrl(e);return W`
       <button
-        class=${e({ tile: true, playing: isActive })}
-        style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
-        aria-label=${story.title}
-        @click=${() => this._play(story)}
+        class=${ge({tile:!0,playing:r})}
+        style=${be(n?{backgroundImage:`url("${n}")`}:{})}
+        aria-label=${e.title}
+        @click=${()=>this._play(e)}
       >
-        ${!cover
-            ? b `<ha-icon class="fallback" icon="mdi:book-open-variant"></ha-icon>`
-            : A}
-        ${config.show_duration && story.duration_min
-            ? b `<span class="badge">~${story.duration_min}m</span>`
-            : A}
-        ${isPlaying
-            ? b `<span class="equalizer" aria-hidden="true"
+        ${n?K:W`<ha-icon class="fallback" icon="mdi:book-open-variant"></ha-icon>`}
+        ${s.show_duration&&e.duration_min?W`<span class="badge">~${e.duration_min}m</span>`:K}
+        ${o?W`<span class="equalizer" aria-hidden="true"
               ><i></i><i></i><i></i
-            ></span>`
-            : A}
-        ${justPlayed
-            ? b `<span class="pop" aria-hidden="true">
+            ></span>`:K}
+        ${a?W`<span class="pop" aria-hidden="true">
               <ha-icon icon="mdi:play-circle"></ha-icon>
-            </span>`
-            : A}
+            </span>`:K}
         <span class="tile-footer">
-          ${config.show_titles !== false
-            ? b `<span class="tile-title">${story.title}</span>`
-            : A}
-          ${config.show_stats
-            ? b `<span class="tile-stats">${this._statsLine(story)}</span>`
-            : A}
+          ${!1!==s.show_titles?W`<span class="tile-title">${e.title}</span>`:K}
+          ${s.show_stats?W`<span class="tile-stats">${this._statsLine(e)}</span>`:K}
         </span>
       </button>
-    `;
-    }
-    _renderRow(story, activeId, playingNow) {
-        const config = this._config;
-        const isActive = activeId === story.id;
-        const isPlaying = playingNow === story.id;
-        const justPlayed = this._justPlayed === story.id;
-        const cover = this._coverUrl(story);
-        return b `
+    `}_renderRow(e,t,i){const s=this._config,r=t===e.id,o=i===e.id,a=this._justPlayed===e.id,n=this._coverUrl(e);return W`
       <button
-        class=${e({ row: true, playing: isActive })}
-        aria-label=${story.title}
-        @click=${() => this._play(story)}
+        class=${ge({row:!0,playing:r})}
+        aria-label=${e.title}
+        @click=${()=>this._play(e)}
       >
         <span
           class="thumb"
-          style=${o(cover ? { backgroundImage: `url("${cover}")` } : {})}
+          style=${be(n?{backgroundImage:`url("${n}")`}:{})}
         >
-          ${!cover
-            ? b `<ha-icon icon="mdi:book-open-variant"></ha-icon>`
-            : A}
-          ${isPlaying
-            ? b `<span class="equalizer" aria-hidden="true"
+          ${n?K:W`<ha-icon icon="mdi:book-open-variant"></ha-icon>`}
+          ${o?W`<span class="equalizer" aria-hidden="true"
                 ><i></i><i></i><i></i
-              ></span>`
-            : A}
+              ></span>`:K}
         </span>
         <span class="row-main">
-          <span class="row-title">${story.title}</span>
-          ${config.show_stats
-            ? b `<span class="row-stats">${this._statsLine(story)}</span>`
-            : A}
+          <span class="row-title">${e.title}</span>
+          ${s.show_stats?W`<span class="row-stats">${this._statsLine(e)}</span>`:K}
         </span>
-        ${config.show_duration && story.duration_min
-            ? b `<span class="row-duration">~${story.duration_min}m</span>`
-            : A}
+        ${s.show_duration&&e.duration_min?W`<span class="row-duration">~${e.duration_min}m</span>`:K}
         <ha-icon
           class="row-play"
-          icon=${justPlayed || isPlaying ? "mdi:volume-high" : "mdi:play-circle"}
+          icon=${a||o?"mdi:volume-high":"mdi:play-circle"}
         ></ha-icon>
       </button>
-    `;
-    }
-    static { this.styles = i$5 `
+    `}static{this.styles=a`
     ha-card {
       padding: 16px;
       overflow: hidden;
@@ -3245,66 +1246,5 @@ let BedtimeStoriesCard = class BedtimeStoriesCard extends i$2 {
         opacity: 0;
       }
     }
-  `; }
-};
-__decorate([
-    n$1({ attribute: false })
-], BedtimeStoriesCard.prototype, "hass", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_config", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_library", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_covers", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_error", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_justPlayed", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_localSort", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_playHere", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_localPlayingId", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_localPaused", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_localPos", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_localDur", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_scrubbing", void 0);
-__decorate([
-    r()
-], BedtimeStoriesCard.prototype, "_scrubValue", void 0);
-__decorate([
-    e$2("audio")
-], BedtimeStoriesCard.prototype, "_audioEl", void 0);
-BedtimeStoriesCard = __decorate([
-    t$1("bedtime-stories-card")
-], BedtimeStoriesCard);
-window.customCards = window.customCards ?? [];
-window.customCards.push({
-    type: "bedtime-stories-card",
-    name: "Bedtime Stories Card",
-    description: "Kid-friendly story tiles with categories, play statistics and a switchable playback target.",
-    preview: true,
-    documentationURL: "https://github.com/florianbaethge/bedtime_stories",
-});
-// eslint-disable-next-line no-console
-console.info(`%c BEDTIME-STORIES-CARD %c ${"0.2.0"} `, "color: #fff; background: #5c6bc0; font-weight: 700;", "color: #5c6bc0; background: #fff; font-weight: 700;");
-
-export { BedtimeStoriesCard };
+  `}};e([pe({attribute:!1})],Ue.prototype,"hass",void 0),e([_e()],Ue.prototype,"_config",void 0),e([_e()],Ue.prototype,"_library",void 0),e([_e()],Ue.prototype,"_covers",void 0),e([_e()],Ue.prototype,"_error",void 0),e([_e()],Ue.prototype,"_justPlayed",void 0),e([_e()],Ue.prototype,"_localSort",void 0),e([_e()],Ue.prototype,"_playHere",void 0),e([_e()],Ue.prototype,"_localPlayingId",void 0),e([_e()],Ue.prototype,"_localPaused",void 0),e([_e()],Ue.prototype,"_localPos",void 0),e([_e()],Ue.prototype,"_localDur",void 0),e([_e()],Ue.prototype,"_scrubbing",void 0),e([_e()],Ue.prototype,"_scrubValue",void 0),e([function(e){return(t,i,s)=>((e,t,i)=>(i.configurable=!0,i.enumerable=!0,Reflect.decorate&&"object"!=typeof t&&Object.defineProperty(e,t,i),i))(t,i,{get(){return(t=>t.renderRoot?.querySelector(e)??null)(this)}})}("audio")],Ue.prototype,"_audioEl",void 0),Ue=e([le("bedtime-stories-card")],Ue),window.customCards=window.customCards??[],window.customCards.push({type:"bedtime-stories-card",name:"Bedtime Stories Card",description:"Kid-friendly story tiles with categories, play statistics and a switchable playback target.",preview:!0,documentationURL:"https://github.com/florianbaethge/bedtime_stories"}),console.info("%c BEDTIME-STORIES-CARD %c 0.3.0 ","color: #fff; background: #5c6bc0; font-weight: 700;","color: #5c6bc0; background: #fff; font-weight: 700;");export{Ue as BedtimeStoriesCard};
 //# sourceMappingURL=bedtime-stories-card.js.map
