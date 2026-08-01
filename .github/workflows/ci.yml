@@ -59,6 +59,3 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-          # 'brands' requires registration in home-assistant/brands (HACS default
-          # store only); not needed for custom-repository installs.
-          ignore: brands
