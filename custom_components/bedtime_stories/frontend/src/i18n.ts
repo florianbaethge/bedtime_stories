@@ -18,7 +18,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     resume: "Resume",
     now_playing: "Now playing",
     // editor
-    tab_settings: "Settings",
     tab_content: "Content",
     section_appearance: "Appearance",
     section_sorting: "Sorting & statistics",
@@ -36,8 +35,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
       "Browse your Home Assistant media, or upload a new audio file straight to “My media” with the button below.",
     cover_selected: "Selected image",
     cover_none: "No cover image selected yet",
+    cover_uploaded: "Uploaded image",
     cover_help:
-      "Browse your Home Assistant media, or upload a picture straight to “My media” with the button below.",
+      "Browse your Home Assistant media, or upload a picture with the button below — uploads are automatically resized and cached for fast loading.",
     or: "or",
     upload_file: "Upload",
     uploading: "Uploading…",
@@ -98,8 +98,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     duration: "Duration (minutes)",
     cover: "Cover image",
     media: "Media file",
-    media_hint:
-      "Pick a file from the media browser (upload possible there) or paste a media-source URL / stream URL below.",
     media_content_id: "Media URL / content id",
     media_content_type: "Content type",
     story_id_hint: "Story ID (for automations)",
@@ -129,7 +127,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     pause: "Pause",
     resume: "Fortsetzen",
     now_playing: "Wird abgespielt",
-    tab_settings: "Einstellungen",
     tab_content: "Inhalte",
     section_appearance: "Darstellung",
     section_sorting: "Sortierung & Statistik",
@@ -147,8 +144,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
       "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten eine neue Audiodatei direkt in „Meine Medien“ hoch.",
     cover_selected: "Ausgewähltes Bild",
     cover_none: "Noch kein Cover-Bild ausgewählt",
+    cover_uploaded: "Hochgeladenes Bild",
     cover_help:
-      "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild direkt in „Meine Medien“ hoch.",
+      "Durchsuche deine Home-Assistant-Medien oder lade mit dem Button unten ein Bild hoch — Uploads werden automatisch verkleinert und für schnelles Laden zwischengespeichert.",
     or: "oder",
     upload_file: "Hochladen",
     uploading: "Wird hochgeladen…",
@@ -209,8 +207,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     duration: "Dauer (Minuten)",
     cover: "Cover-Bild",
     media: "Mediendatei",
-    media_hint:
-      "Wähle eine Datei aus dem Medienbrowser (Upload dort möglich) oder trage unten eine media-source-URL / Stream-URL ein.",
     media_content_id: "Medien-URL / Content-ID",
     media_content_type: "Content-Type",
     story_id_hint: "Geschichten-ID (für Automationen)",

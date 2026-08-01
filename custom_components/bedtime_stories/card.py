@@ -21,13 +21,8 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def _versioned_url(card_file: str) -> str:
+def _versioned_url(cache_bust: int) -> str:
     """Card URL with version + mtime cache-buster."""
-    try:
-        cache_bust = int(os.path.getmtime(card_file))
-    except OSError:
-        _LOGGER.warning("Card file missing at %s", card_file)
-        cache_bust = 0
     return f"{CARD_URL}?v={INTEGRATION_VERSION}&m={cache_bust}"
 
 
@@ -72,7 +67,13 @@ async def async_register_card(hass: HomeAssistant) -> None:
         await resources.async_load()
         resources.loaded = True
 
-    url = _versioned_url(card_file)
+    try:
+        # stat() is blocking — keep it off the event loop.
+        cache_bust = int(await hass.async_add_executor_job(os.path.getmtime, card_file))
+    except OSError:
+        _LOGGER.warning("Card file missing at %s", card_file)
+        cache_bust = 0
+    url = _versioned_url(cache_bust)
     existing = [
         item
         for item in resources.async_items()

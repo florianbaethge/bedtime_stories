@@ -1,6 +1,7 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import replace from "@rollup/plugin-replace";
+import terser from "@rollup/plugin-terser";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -24,5 +25,6 @@ export default {
     }),
     nodeResolve({ extensions: [".ts", ".js"] }),
     typescript({ tsconfig: "./tsconfig.json" }),
+    terser({ format: { comments: false } }),
   ],
 };
