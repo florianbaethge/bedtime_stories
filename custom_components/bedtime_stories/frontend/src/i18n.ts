@@ -17,6 +17,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     pause: "Pause",
     resume: "Resume",
     now_playing: "Now playing",
+    random_story: "Random story",
     // editor
     tab_content: "Content",
     section_appearance: "Appearance",
@@ -69,6 +70,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     asc: "Ascending",
     desc: "Descending",
     show_sort_selector: "Show sort chips in the card",
+    show_random: "Show “Random story” button",
+    show_random_help:
+      "Adds a full-width button above the stories that plays a random one — handy for kids who cannot decide.",
     show_player: "Show player chip in the header",
     show_device_toggle: "Show “This device” toggle",
     show_device_toggle_help:
@@ -127,6 +131,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     pause: "Pause",
     resume: "Fortsetzen",
     now_playing: "Wird abgespielt",
+    random_story: "Zufällige Geschichte",
     tab_content: "Inhalte",
     section_appearance: "Darstellung",
     section_sorting: "Sortierung & Statistik",
@@ -178,6 +183,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     asc: "Aufsteigend",
     desc: "Absteigend",
     show_sort_selector: "Sortier-Chips in der Karte anzeigen",
+    show_random: "„Zufällige Geschichte“-Button anzeigen",
+    show_random_help:
+      "Fügt über den Geschichten einen Button über die volle Breite hinzu, der eine zufällige Geschichte abspielt — praktisch, wenn sich die Kinder nicht entscheiden können.",
     show_player: "Player-Chip im Kopf anzeigen",
     show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
     show_device_toggle_help:

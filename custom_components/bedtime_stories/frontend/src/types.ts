@@ -85,6 +85,7 @@ export interface BedtimeStoriesCardConfig {
   sort?: SortMode;
   sort_direction?: SortDirection;
   show_sort_selector?: boolean;
+  show_random?: boolean;
   show_player?: boolean;
   show_device_toggle?: boolean;
   show_now_playing?: boolean;
@@ -106,6 +107,7 @@ export const DEFAULT_CONFIG: Required<
     | "sort"
     | "sort_direction"
     | "show_sort_selector"
+    | "show_random"
     | "show_player"
     | "show_device_toggle"
     | "show_now_playing"
@@ -122,6 +124,7 @@ export const DEFAULT_CONFIG: Required<
   sort: "manual",
   sort_direction: "asc",
   show_sort_selector: false,
+  show_random: true,
   show_player: true,
   show_device_toggle: true,
   show_now_playing: true,

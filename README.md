@@ -90,6 +90,10 @@ target on top.
   and seeking come from the player, when it supports them) and for _this device_
   playback (full control of the in-browser audio). Hide it with
   `show_now_playing: false`.
+- **Random story**: a full-width button above the stories — fairy icon plus
+  label, framed by a slowly drifting rainbow border that works on light and
+  dark themes — picks one of the shown stories at random and plays it (never
+  the one that is already running). Hide it with `show_random: false`.
 - **Keep awake**: while a story plays on _this device_, the card takes a screen
   wake lock so the display doesn't sleep and cut off playback mid-story. Only
   affects this-device playback; disable with `keep_awake: false`.
@@ -173,6 +177,7 @@ image URL works in the cover's *Advanced* URL field.
 | `sort` | `manual` | `manual`, `alphabetical`, `play_count`, `last_played` |
 | `sort_direction` | `asc` | `asc` or `desc` |
 | `show_sort_selector` | `false` | Sort chips inside the card |
+| `show_random` | `true` | Full-width *Random story* button above the stories |
 | `show_player` | `true` | Player chip in the header (tap to switch player) |
 | `show_device_toggle` | `true` | Header toggle to play in this browser / app |
 | `show_now_playing` | `true` | Play/pause + progress bar above the stories |
