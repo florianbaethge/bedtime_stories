@@ -9,6 +9,7 @@ import {
   resolveMediaSource,
   subscribeLibrary,
 } from "./api";
+import { FAIRY_PATH } from "./fairy-icon";
 import { localize, relativeTime } from "./i18n";
 import { isMediaSource, resolveImage } from "./media-image";
 import {
@@ -586,6 +587,24 @@ export class BedtimeStoriesCard extends LitElement {
     }
   }
 
+  /** Every story the card currently shows, across all visible categories. */
+  private _shownStories(): Story[] {
+    const lib = this._library;
+    if (!lib) return [];
+    const ids = new Set(this._visibleCategories().map((c) => c.id));
+    return lib.stories.filter((s) => ids.has(s.category_id));
+  }
+
+  private _playRandom(): void {
+    const stories = this._shownStories();
+    if (stories.length === 0) return;
+    const current = this._activePlayback()?.story.id ?? this._justPlayed;
+    // Never draw the story that is already running, as long as there is another.
+    const pool =
+      stories.length > 1 ? stories.filter((s) => s.id !== current) : stories;
+    void this._play(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
   /** Resolve a story's media id into a URL the browser can play. */
   private async _resolveMediaUrl(mediaId: string): Promise<string | null> {
     if (!this.hass) return null;
@@ -748,6 +767,9 @@ export class BedtimeStoriesCard extends LitElement {
         ${this._error
           ? html`<div class="error">${this._error}</div>`
           : nothing}
+        ${config.show_random !== false && this._shownStories().length > 0
+          ? this._renderRandom()
+          : nothing}
         ${categories.length === 0
           ? html`<div class="empty">
               <ha-icon icon="mdi:sleep"></ha-icon>
@@ -790,6 +812,23 @@ export class BedtimeStoriesCard extends LitElement {
           `
         )}
       </div>
+    `;
+  }
+
+  private _renderRandom(): TemplateResult {
+    const label = localize(this.hass, "random_story");
+    return html`
+      <button class="random" title=${label} @click=${this._playRandom}>
+        <svg
+          class="fairy"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path fill="currentColor" fill-rule="evenodd" d=${FAIRY_PATH}></path>
+        </svg>
+        <span class="random-label">${label}</span>
+      </button>
     `;
   }
 
@@ -976,6 +1015,20 @@ export class BedtimeStoriesCard extends LitElement {
   }
 
   static styles = css`
+    :host {
+      /* Kid-friendly rainbow, readable against both light and dark cards. */
+      --bs-rainbow: linear-gradient(
+        90deg,
+        #ff6b6b,
+        #ffa63d,
+        #ffd93d,
+        #6bd968,
+        #4fc3f7,
+        #9d7bff,
+        #ff6bd6,
+        #ff6b6b
+      );
+    }
     ha-card {
       padding: 16px;
       overflow: hidden;
@@ -1133,6 +1186,91 @@ export class BedtimeStoriesCard extends LitElement {
     }
     .np-btn ha-icon {
       --mdc-icon-size: 26px;
+    }
+    /* --- random story button --- */
+    .random {
+      position: relative;
+      box-sizing: border-box;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 12px 0 4px;
+      padding: 10px 18px;
+      border: 3px solid transparent;
+      border-radius: 18px;
+      /* Inner fill in the card colour, rainbow only on the border. */
+      background:
+        linear-gradient(
+            var(--card-background-color),
+            var(--card-background-color)
+          )
+          padding-box,
+        var(--bs-rainbow) border-box;
+      background-size:
+        auto,
+        300% 100%;
+      animation: rainbow 8s linear infinite;
+      color: var(--primary-text-color);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+    /* Barely-there rainbow wash so the inside doesn't look empty. */
+    .random::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--bs-rainbow);
+      background-size: 300% 100%;
+      opacity: 0.07;
+      /* Own keyframes: a single background layer takes a single position. */
+      animation: rainbow-wash 8s linear infinite;
+      pointer-events: none;
+    }
+    .random:active {
+      transform: scale(0.98);
+    }
+    @media (hover: hover) {
+      .random:hover {
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+      }
+    }
+    @keyframes rainbow {
+      to {
+        background-position:
+          0 0,
+          -300% 0;
+      }
+    }
+    @keyframes rainbow-wash {
+      to {
+        background-position: -300% 0;
+      }
+    }
+    /* The artwork faces left — mirror her so she looks at the label. */
+    .fairy {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
+      transform: scaleX(-1);
+    }
+    .random-label {
+      position: relative;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .random,
+      .random::before {
+        animation: none;
+      }
     }
     .sort-chips {
       display: flex;
