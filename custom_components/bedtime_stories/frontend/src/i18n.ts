@@ -73,6 +73,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     show_random: "Show “Random story” button",
     show_random_help:
       "Adds a full-width button above the stories that plays a random one — handy for kids who cannot decide.",
+    random_label: "Random button label",
+    random_label_help:
+      "Custom text for the “Random story” button. Leave empty to use the default label.",
     show_player: "Show player chip in the header",
     show_device_toggle: "Show “This device” toggle",
     show_device_toggle_help:
@@ -186,6 +189,9 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     show_random: "„Zufällige Geschichte“-Button anzeigen",
     show_random_help:
       "Fügt über den Geschichten einen Button über die volle Breite hinzu, der eine zufällige Geschichte abspielt — praktisch, wenn sich die Kinder nicht entscheiden können.",
+    random_label: "Beschriftung des Zufalls-Buttons",
+    random_label_help:
+      "Eigener Text für den „Zufällige Geschichte“-Button. Leer lassen für die Standard-Beschriftung.",
     show_player: "Player-Chip im Kopf anzeigen",
     show_device_toggle: "„Dieses Gerät“-Schalter anzeigen",
     show_device_toggle_help:

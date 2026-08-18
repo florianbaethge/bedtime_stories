@@ -268,7 +268,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
         selector: { number: { min: 0, max: 8, mode: "box" } },
       });
     }
-    return [
+    const schema: unknown[] = [
       { name: "", type: "grid", schema: layoutRow },
       {
         name: "",
@@ -280,6 +280,10 @@ export class BedtimeStoriesCardEditor extends LitElement {
       },
       { name: "show_random", selector: { boolean: {} } },
     ];
+    if (config.show_random !== false) {
+      schema.push({ name: "random_label", selector: { text: {} } });
+    }
+    return schema;
   }
 
   private _sortingSchema(): unknown[] {
@@ -363,6 +367,7 @@ export class BedtimeStoriesCardEditor extends LitElement {
   private _computeHelper = (schema: { name: string }): string | undefined => {
     if (schema.name === "columns") return this._l("columns_help");
     if (schema.name === "show_random") return this._l("show_random_help");
+    if (schema.name === "random_label") return this._l("random_label_help");
     if (schema.name === "show_device_toggle") {
       return this._l("show_device_toggle_help");
     }
