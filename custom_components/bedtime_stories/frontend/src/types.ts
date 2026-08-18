@@ -86,6 +86,7 @@ export interface BedtimeStoriesCardConfig {
   sort_direction?: SortDirection;
   show_sort_selector?: boolean;
   show_random?: boolean;
+  random_label?: string;
   show_player?: boolean;
   show_device_toggle?: boolean;
   show_now_playing?: boolean;

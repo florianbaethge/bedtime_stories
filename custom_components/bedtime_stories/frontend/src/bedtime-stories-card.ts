@@ -816,7 +816,9 @@ export class BedtimeStoriesCard extends LitElement {
   }
 
   private _renderRandom(): TemplateResult {
-    const label = localize(this.hass, "random_story");
+    const label =
+      this._config?.random_label?.trim() ||
+      localize(this.hass, "random_story");
     return html`
       <button class="random" title=${label} @click=${this._playRandom}>
         <svg
