@@ -65,6 +65,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.data.pop(CARD_REGISTERED_KEY, None)
             raise
 
+    from .covers import async_optimize_legacy_covers
+
+    entry.async_create_background_task(
+        hass,
+        async_optimize_legacy_covers(hass, manager),
+        f"{DOMAIN}_optimize_covers_{entry.entry_id}",
+    )
+
     return True
 
 
